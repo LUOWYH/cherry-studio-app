@@ -1,29 +1,25 @@
-import BottomSheet from '@gorhom/bottom-sheet'
-import { useNavigation } from '@react-navigation/native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { FlashList, ListRenderItemInfo } from '@shopify/flash-list'
 import { Plus } from '@tamagui/lucide-icons'
 import debounce from 'lodash/debounce'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { ScrollView, Text, YStack } from 'tamagui'
+import { YStack } from 'tamagui'
 
 import { SettingContainer, SettingGroup } from '@/components/settings'
 import { HeaderBar } from '@/components/settings/HeaderBar'
 import { AddProviderSheet } from '@/components/settings/providers/AddProviderSheet'
 import { ProviderItem } from '@/components/settings/providers/ProviderItem'
-import CustomRadialGradientBackground from '@/components/ui/CustomRadialGradientBackground'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { useAllProviders } from '@/hooks/useProviders'
-import { loggerService } from '@/services/LoggerService'
-const logger = loggerService.withContext('ProviderListScreen')
+import { Provider } from '@/types/assistant'
 
 export default function ProviderListScreen() {
   const { t } = useTranslation()
-  const navigation = useNavigation()
 
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheetModal>(null)
   const { providers, isLoading } = useAllProviders()
 
   const [searchText, setSearchText] = useState('')
@@ -34,52 +30,32 @@ export default function ProviderListScreen() {
     setDebouncedSearchText(text)
   }, 300)
 
-  const [selectedProviderType, setSelectedProviderType] = useState<string | undefined>(undefined)
-  const [providerName, setProviderName] = useState('')
-
   // 监听 searchText 变化，触发防抖更新
   useEffect(() => {
     debouncedSetSearch(searchText)
-    
+
     // 清理函数，组件卸载时取消防抖
     return () => {
       debouncedSetSearch.cancel()
     }
   })
 
-  const filteredProviders = providers.filter(p => p.name && p.name.toLowerCase().includes(debouncedSearchText.toLowerCase()))
-
-  const handleProviderTypeChange = (value: string) => {
-    setSelectedProviderType(value)
-  }
-
-  const handleProviderNameChange = (name: string) => {
-    setProviderName(name)
-  }
-
-  const handleOpenBottomSheet = () => {
-    bottomSheetRef.current?.expand()
-    setIsBottomSheetOpen(true)
-  }
-
-  const handleBottomSheetClose = () => {
-    setIsBottomSheetOpen(false)
-  }
+  const filteredProviders = providers.filter(
+    p => p.name && p.name.toLowerCase().includes(debouncedSearchText.toLowerCase())
+  )
 
   const onAddProvider = () => {
-    handleOpenBottomSheet()
+    bottomSheetRef.current?.present()
   }
 
-  const handleAddProvider = () => {
-    logger.info('Provider Name:', providerName)
-    logger.info('Provider Type:', selectedProviderType)
-  }
+  const renderProviderItem = ({ item }: ListRenderItemInfo<Provider>) => (
+    <ProviderItem key={item.id} provider={item} mode="checked" />
+  )
 
   return (
     <SafeAreaContainer>
       <HeaderBar
         title={t('settings.provider.list.title')}
-        onBackPress={() => navigation.goBack()}
         rightButton={{
           icon: <Plus size={24} />,
           onPress: onAddProvider
@@ -90,38 +66,25 @@ export default function ProviderListScreen() {
           <ActivityIndicator />
         </SafeAreaContainer>
       ) : (
-        <SettingContainer>
-          <SearchInput
-            placeholder={t('settings.provider.search')}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
+        <SettingContainer paddingBottom={0}>
+          <SearchInput placeholder={t('settings.provider.search')} value={searchText} onChangeText={setSearchText} />
 
-          <YStack flex={1} gap={8}>
-            <Text>{t('settings.provider.title')}</Text>
-            <CustomRadialGradientBackground style={{ radius: 2 }}>
-              <ScrollView backgroundColor="$colorTransparent">
-                <SettingGroup>
-                  {filteredProviders.map(p => (
-                    <ProviderItem key={p.id} provider={p} mode="checked" />
-                  ))}
-                </SettingGroup>
-              </ScrollView>
-            </CustomRadialGradientBackground>
+          <YStack flex={1} height="100%">
+            <SettingGroup flex={1}>
+              <FlashList
+                data={filteredProviders}
+                renderItem={renderProviderItem}
+                keyExtractor={item => item.id}
+                estimatedItemSize={60}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 24 }}
+              />
+            </SettingGroup>
           </YStack>
         </SettingContainer>
       )}
 
-      <AddProviderSheet
-        bottomSheetRef={bottomSheetRef}
-        isOpen={isBottomSheetOpen}
-        onClose={handleBottomSheetClose}
-        providerName={providerName}
-        onProviderNameChange={handleProviderNameChange}
-        selectedProviderType={selectedProviderType}
-        onProviderTypeChange={handleProviderTypeChange}
-        onAddProvider={handleAddProvider}
-      />
+      <AddProviderSheet ref={bottomSheetRef} />
     </SafeAreaContainer>
   )
 }

@@ -1,12 +1,6 @@
 {
   "translation": {
     "assistants": {
-      "create": {
-        "title": "创建助手"
-      },
-      "edit": {
-        "title": "编辑助手"
-      },
       "market": {
         "add.success": "添加 {{assistant_name}} 成功",
         "button.chat": "立即聊天",
@@ -20,21 +14,21 @@
         "my_assistant": "我的助手",
         "popular": "热门助手",
         "search_placeholder": "搜索助手...",
-        "title": "助理市场"
+        "title": "助手市场"
       },
       "name": "助手名称",
       "save": "保存助手",
       "search.no_results": "未找到助手",
       "settings.context": "上下文",
-      "settings.max_tokens": "启用最大令牌限制",
-      "settings.max_tokens_value": "最大令牌限制",
-      "settings.reasoning": "推理努力",
+      "settings.max_tokens": "启用最大token限制",
+      "settings.max_tokens_value": "最大token限制",
+      "settings.reasoning": "思考深度",
       "settings.reasoning.auto": "默认",
       "settings.reasoning.high": "沉思",
       "settings.reasoning.low": "浮想",
       "settings.reasoning.medium": "斟酌",
       "settings.reasoning.off": "关闭",
-      "settings.stream_output": "流输出",
+      "settings.stream_output": "流式输出",
       "settings.temperature": "温度",
       "settings.top_p": "Top P",
       "sort": {
@@ -46,6 +40,7 @@
       "title": "助手",
       "title.create": "创建助手",
       "title.edit": "编辑助手",
+      "title.mine": "我的助手",
       "title.recent": "最近使用的助手"
     },
     "button": {
@@ -79,7 +74,7 @@
         "search": {
           "results": "结果"
         },
-        "title": "主题"
+        "title": "话题"
       },
       "welcome": "我是您的生产力 AI 助手。您可以创建助手、管理模型等。"
     },
@@ -91,10 +86,13 @@
       "cherry_studio_description": "强大的 AI 生产力助手",
       "clear_all": "清除全部",
       "close": "关闭",
+      "confirm": "确认",
+      "delete": "删除",
       "description": "描述",
       "enabled": "已启用",
       "error_occurred": "发生错误",
       "file": "文件",
+      "generateImage": "创建图片",
       "language": "语言",
       "last_month": "上月",
       "last_week": "上周",
@@ -116,7 +114,42 @@
       "today": "今天",
       "tool": "工具",
       "visit": "访问",
+      "websearch": "网络搜索",
       "yesterday": "昨天"
+    },
+    "error": {
+      "backup": {
+        "file_format": "备份文件格式错误",
+        "file_invalid": "备份文件无效，需要在Cherry Studio中通过导出到移动端获取",
+        "title": "备份失败"
+      },
+      "chat": {
+        "response": "出错了，如果没有配置 API 密钥，请前往设置 > 模型提供商中配置密钥"
+      },
+      "http": {
+        "400": "请求错误，请检查请求参数是否正确。如果修改了模型设置，请重置到默认设置",
+        "401": "身份验证失败，请检查 API 密钥是否正确",
+        "403": "禁止访问，请翻译具体报错信息查看原因，或联系服务商询问被禁止原因",
+        "404": "模型不存在或者请求路径错误",
+        "429": "请求速率超过限制，请稍后再试",
+        "500": "服务器错误，请稍后再试",
+        "502": "网关错误，请稍后再试",
+        "503": "服务不可用，请稍后再试",
+        "504": "网关超时，请稍后再试"
+      },
+      "missing_user_message": "无法切换模型响应：原始用户消息已被删除。请发送新消息以获取此模型的响应",
+      "model": {
+        "exists": "模型已存在"
+      },
+      "no_api_key": "API 密钥未配置",
+      "pause_placeholder": "已中断",
+      "provider_disabled": "模型提供商未启用",
+      "render": {
+        "description": "消息内容渲染失败，请检查消息内容格式是否正确",
+        "title": "渲染错误"
+      },
+      "unknown": "未知错误",
+      "user_message_not_found": "无法找到原始用户消息"
     },
     "errors": {
       "cannotOpenLink": "无法打开链接: {{error}}",
@@ -126,9 +159,9 @@
       "linkErrorTitle": "打开链接出错"
     },
     "history": {
-      "search.placeholder": "搜索主题或消息...",
-      "search.topics.empty": "未找到主题，按 Enter 搜索所有消息",
-      "topics.empty": "未找到主题"
+      "search.placeholder": "搜索话题或消息...",
+      "search.topics.empty": "未找到话题，按 Enter 搜索所有消息",
+      "topics.empty": "未找到话题"
     },
     "inputs": {
       "placeholder": "发送消息..."
@@ -141,8 +174,17 @@
       "search_placeholder": "搜索...",
       "see_all": "查看全部",
       "topic": {
-        "recent": "最近的主题",
-        "title": "主题"
+        "recent": "最近的话题",
+        "title": "话题"
+      }
+    },
+    "message": {
+      "delete_message": "删除消息",
+      "delete_translation": "删除翻译",
+      "searching": "正在搜索...",
+      "translate_message": "翻译消息",
+      "websearch": {
+        "fetch_complete": "已完成 {{count}} 次搜索..."
       }
     },
     "models": {
@@ -168,54 +210,62 @@
       "noContent": "还没有{{type}}内容"
     },
     "provider": {
+      "302ai": "302.AI",
       "aihubmix": "AiHubMix",
       "alayanew": "Alaya NeW",
       "anthropic": "Anthropic",
+      "aws-bedrock": "AWS Bedrock",
       "azure-openai": "Azure OpenAI",
-      "baichuan": "Baichuan",
-      "baidu-cloud": "Baidu Cloud",
+      "baichuan": "百川",
+      "baidu-cloud": "百度云千帆",
       "burncloud": "BurnCloud",
+      "cephalon": "Cephalon",
       "copilot": "GitHub Copilot",
-      "dashscope": "Alibaba Cloud",
-      "deepseek": "DeepSeek",
+      "dashscope": "阿里云百炼",
+      "deepseek": "深度求索",
       "dmxapi": "DMXAPI",
-      "doubao": "Volcengine",
+      "doubao": "火山引擎",
       "fireworks": "Fireworks",
       "gemini": "Gemini",
-      "gitee-ai": "Gitee AI",
+      "gitee-ai": "模力方舟",
       "github": "GitHub Models",
       "gpustack": "GPUStack",
       "grok": "Grok",
       "groq": "Groq",
-      "hunyuan": "Tencent Hunyuan",
+      "hunyuan": "腾讯混元",
       "hyperbolic": "Hyperbolic",
-      "infini": "Infini",
+      "infini": "无问芯穹",
       "jina": "Jina",
+      "lanyun": "蓝耘科技",
       "lmstudio": "LM Studio",
       "minimax": "MiniMax",
       "mistral": "Mistral",
-      "modelscope": "ModelScope",
-      "moonshot": "Moonshot",
-      "nvidia": "Nvidia",
+      "modelscope": "ModelScope 魔搭",
+      "moonshot": "月之暗面",
+      "new-api": "New API",
+      "nvidia": "英伟达",
       "o3": "O3",
       "ocoolai": "ocoolAI",
       "ollama": "Ollama",
       "openai": "OpenAI",
       "openrouter": "OpenRouter",
       "perplexity": "Perplexity",
-      "ppio": "PPIO",
-      "qiniu": "Qiniu",
+      "ph8": "PH8 大模型开放平台",
+      "poe": "Poe",
+      "ppio": "PPIO 派欧云",
+      "qiniu": "七牛云 AI 推理",
       "qwenlm": "QwenLM",
-      "silicon": "SiliconFlow",
-      "stepfun": "StepFun",
-      "tencent-cloud-ti": "Tencent Cloud TI",
+      "silicon": "硅基流动",
+      "stepfun": "阶跃星辰",
+      "tencent-cloud-ti": "腾讯云 TI",
       "together": "Together",
       "tokenflux": "TokenFlux",
+      "vertexai": "Vertex AI",
       "voyageai": "Voyage AI",
-      "xirang": "State Cloud Xirang",
-      "yi": "Yi",
-      "zhinao": "360AI",
-      "zhipu": "ZHIPU AI"
+      "xirang": "天翼云息壤",
+      "yi": "零一万物",
+      "zhinao": "360 智脑",
+      "zhipu": "智谱 AI"
     },
     "settings": {
       "about": {
@@ -248,11 +298,11 @@
           "name": "默认助手"
         },
         "empty": "还没有助手...",
-        "title": "默认助手",
-        "topic_naming_assistant": {
-          "description": "自动命名新主题时使用的助手",
-          "name": "主题命名助手"
+        "quick_assistant": {
+          "description": "用于简单任务的助手，例如话题命名和关键字提取",
+          "name": "快速助手"
         },
+        "title": "默认助手",
         "translate_assistant": {
           "description": "用于翻译服务的助手",
           "name": "翻译助手"
@@ -261,21 +311,25 @@
       "assistant.show.icon": "显示模型图标",
       "data": {
         "app_data": "应用数据",
+        "app_data_location": "应用数据位置",
         "app_knowledge": "知识库文件",
         "app_knowledge.remove_all": "删除文件",
         "app_logs": "应用日志",
         "backup": "数据备份",
         "basic_title": "基础数据设置",
         "clear_cache": {
-          "button": "清除缓存",
+          "button": "清除缓存 ({{cacheSize}})",
           "title": "清除缓存"
         },
         "cloud_backup": "云端备份设置",
         "data.title": "数据目录",
+        "data_reset": {
+          "error": "数据重置失败。请重试，如果问题持续存在，请联系技术支持。"
+        },
         "landrop": {
           "filename": "文件名",
           "scan_qr_code": {
-            "description": "请使用樱桃工作室扫码",
+            "description": "请使用Cherry Studio扫码",
             "success": "连接成功 🎉",
             "success_description": "现在可以点击发送按钮来恢复数据了！",
             "title": "扫描二维码"
@@ -290,10 +344,13 @@
             "zip_file_end": "文件传输完成",
             "zip_file_start": "文件传输已开始"
           },
-          "title": "蓝卓投送"
+          "title": "局域网传输"
         },
+        "log_location": "日志文件位置",
         "recovery": "数据恢复",
         "reset": "数据重置",
+        "reset_success": "数据重置成功！应用已恢复到初始状态。",
+        "reset_warning": "您确定要重置所有数据吗？这将删除所有对话、消息和用户创建的内容。此操作无法撤销。",
         "restore": {
           "error": "恢复错误",
           "error_message": "恢复过程中出现错误，请检查文件并重试。",
@@ -308,8 +365,8 @@
           "steps": {
             "restore_assistants": "恢复助手",
             "restore_llm_providers": "恢复LLM提供商",
-            "restore_messages_blocks": "恢复消息和屏蔽",
-            "restore_topics": "恢复主题",
+            "restore_messages_blocks": "恢复消息",
+            "restore_topics": "恢复话题",
             "restore_websearch": "恢复网络搜索"
           }
         },
@@ -344,6 +401,12 @@
         "token_placeholder": "Joplin 授权令牌",
         "url": "Joplin Web 剪藏服务 URL",
         "url_placeholder": "http://127.0.0.1:41184/"
+      },
+      "mcp": {
+        "errors": {
+          "32000": "MCP 服务器错误",
+          "toolNotFound": "工具 '{{name}}' 未找到"
+        }
       },
       "modelAndService": "AI模型与服务",
       "models": {
@@ -402,12 +465,17 @@
         "default_vault_placeholder": "请选择默认的 Obsidian 仓库",
         "title": "Obsidian 配置"
       },
+      "personal": {
+        "name": "用户名",
+        "namePlaceholder": "请输入用户名",
+        "title": "个人设置"
+      },
       "provider": {
         "add.name": "提供者名称",
         "add.name.placeholder": "示例：OpenAI",
         "add.title": "添加供应商",
         "add.type": "提供者类型",
-        "added": "添加",
+        "added": "已添加",
         "api.url.preview": "预览: {{url}}",
         "api.url.reset": "重置",
         "api.url.tip": "以 / 结尾忽略 v1，以 # 结尾强制使用输入地址",
@@ -418,13 +486,19 @@
         "api_key": "API 密钥",
         "api_key.get": "获取 API 密钥",
         "api_key.placeholder": "请输入 API 密钥",
-        "api_key.tip": "多个键用逗号分隔",
+        "api_key.tip": "多个密钥用逗号分隔",
         "api_service": "API 服务",
         "auth": {
           "balance_recharge": "余额充值",
           "free_bills": "免费额度",
           "login": "登录",
           "title": "{{provider}}服务"
+        },
+        "check_failed": {
+          "api_key_empty": "API密钥不能为空",
+          "model_api_key_empty": "模型和API密钥不能为空",
+          "model_empty": "模型不能为空",
+          "title": "模型检查失败"
         },
         "delete.content": "您确定要删除此提供者吗？",
         "delete.title": "删除提供者",
@@ -460,10 +534,10 @@
       "theme.window.style.title": "窗口样式",
       "theme.window.style.transparent": "透明窗口",
       "title": "设置",
-      "topic.position": "主题位置",
+      "topic.position": "话题位置",
       "topic.position.left": "左侧",
       "topic.position.right": "正确",
-      "topic.show.time": "显示主题时间",
+      "topic.show.time": "显示话题时间",
       "tray.title": "启用系统托盘图标",
       "webdav": {
         "backup": {
@@ -518,7 +592,7 @@
           "title": "网络搜索服务提供商"
         },
         "searchCount": "搜索数量",
-        "searchWithDates": "包含日期��索",
+        "searchWithDates": "包含日期搜索",
         "selectPlaceholder": "请选择网页搜索提供商...",
         "subscribe.title": "黑名单订阅",
         "title": "网络搜索"
@@ -541,8 +615,8 @@
     },
     "topics": {
       "new_topic": "新话题",
-      "title": "主题",
-      "title.recent": "最近的主题"
+      "title": "话题",
+      "title.recent": "最近的话题"
     }
   }
 }

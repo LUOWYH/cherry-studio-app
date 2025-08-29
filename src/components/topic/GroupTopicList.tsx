@@ -1,24 +1,42 @@
 import { FlashList } from '@shopify/flash-list'
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react' // 引入 useMemo
 import { useTranslation } from 'react-i18next'
 import { Text, YStack } from 'tamagui'
 
+import { useCustomNavigation } from '@/hooks/useNavigation'
+import { getCurrentTopicId } from '@/hooks/useTopic'
+import { getDefaultAssistant } from '@/services/AssistantService'
+import { loggerService } from '@/services/LoggerService'
+import { deleteMessagesByTopicId } from '@/services/MessagesService'
+import { createNewTopic, deleteTopicById } from '@/services/TopicService'
+import { useAppDispatch } from '@/store'
+import { newMessagesActions } from '@/store/newMessage'
 import { Topic } from '@/types/assistant'
 import { DateGroupKey, getTimeFormatForGroup, groupItemsByDate, TimeFormat } from '@/utils/date'
 
 import TopicItem from './TopicItem'
 
+const logger = loggerService.withContext('GroupTopicList')
+
 interface GroupedTopicListProps {
   topics: Topic[]
+  enableScroll: boolean
 }
 
 // ListItem 类型定义现在使用导入的 TimeFormat
 type ListItem = { type: 'header'; title: string } | { type: 'topic'; topic: Topic; timeFormat: TimeFormat }
 
-export function GroupedTopicList({ topics }: GroupedTopicListProps) {
+export function GroupedTopicList({ topics, enableScroll }: GroupedTopicListProps) {
   const { t } = useTranslation()
+  const [localTopics, setLocalTopics] = useState<Topic[]>([])
+  const { navigateToChatScreen } = useCustomNavigation()
+  const dispatch = useAppDispatch()
 
-  const listData = (() => {
+  useEffect(() => {
+    setLocalTopics(topics)
+  }, [topics])
+
+  const listData = useMemo(() => {
     const groupedTopics = groupItemsByDate(topics, topic => new Date(topic.updatedAt))
 
     const groupOrder: DateGroupKey[] = ['today', 'yesterday', 'thisWeek', 'lastWeek', 'lastMonth', 'older']
@@ -48,7 +66,37 @@ export function GroupedTopicList({ topics }: GroupedTopicListProps) {
     })
 
     return data
-  })()
+  }, [topics, t])
+
+  const handleDelete = async (topicId: string) => {
+    try {
+      const updatedTopics = localTopics.filter(topic => topic.id !== topicId)
+      setLocalTopics(updatedTopics)
+
+      await deleteMessagesByTopicId(topicId)
+      await deleteTopicById(topicId)
+      dispatch(newMessagesActions.deleteTopicLoading({ topicId }))
+
+      if (topicId === getCurrentTopicId()) {
+        const nextTopic =
+          updatedTopics.length > 0
+            ? updatedTopics.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
+            : null
+
+        if (nextTopic) {
+          navigateToChatScreen(nextTopic.id)
+          logger.info('navigateToChatScreen after delete', nextTopic)
+        } else {
+          const defaultAssistant = await getDefaultAssistant()
+          const newTopic = await createNewTopic(defaultAssistant)
+          navigateToChatScreen(newTopic.id)
+          logger.info('navigateToChatScreen with new topic', newTopic)
+        }
+      }
+    } catch (error) {
+      logger.error('Error deleting topic:', error)
+    }
+  }
 
   const renderItem = ({ item, index }: { item: ListItem; index: number }) => {
     switch (item.type) {
@@ -59,7 +107,7 @@ export function GroupedTopicList({ topics }: GroupedTopicListProps) {
           </Text>
         )
       case 'topic':
-        return <TopicItem topic={item.topic} timeFormat={item.timeFormat} />
+        return <TopicItem topic={item.topic} timeFormat={item.timeFormat} onDelete={handleDelete} />
       default:
         return null
     }
@@ -70,6 +118,7 @@ export function GroupedTopicList({ topics }: GroupedTopicListProps) {
       data={listData}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
+      scrollEnabled={enableScroll}
       keyExtractor={(item, index) => {
         if (item.type === 'header') {
           return `header-${item.title}-${index}`
@@ -80,7 +129,7 @@ export function GroupedTopicList({ topics }: GroupedTopicListProps) {
       getItemType={item => {
         return item.type
       }}
-      estimatedItemSize={60}
+      estimatedItemSize={40}
       ItemSeparatorComponent={() => <YStack height={10} />}
     />
   )

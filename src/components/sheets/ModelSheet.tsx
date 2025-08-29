@@ -12,8 +12,8 @@ import { ModelTags } from '@/components/ui/ModelTags'
 import { isEmbeddingModel } from '@/config/models/embedding'
 import { isRerankModel } from '@/config/models/rerank'
 import { useAllProviders } from '@/hooks/useProviders'
+import { useTheme as useCustomTheme } from '@/hooks/useTheme'
 import { Model } from '@/types/assistant'
-import { useIsDark } from '@/utils'
 import { getModelUniqId } from '@/utils/model'
 
 import { ProviderIcon } from '../ui/ProviderIcon'
@@ -28,7 +28,7 @@ interface ModelSheetProps {
 const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, setMentions, multiple }, ref) => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const isDark = useIsDark()
+  const { isDark } = useCustomTheme()
   const [selectedModels, setSelectedModels] = useState<string[]>(() => mentions.map(m => getModelUniqId(m)))
   const [inputValue, setInputValue] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -122,10 +122,12 @@ const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, se
       handleIndicatorStyle={{
         backgroundColor: theme.color.val
       }}
-      backdropComponent={renderBackdrop}>
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose={true}
+      android_keyboardInputMode="adjustResize">
       <BottomSheetScrollView showsVerticalScrollIndicator={false}>
-        <YStack gap={5} padding="20">
-          <XStack gap={5}>
+        <YStack gap={16} paddingHorizontal={20} paddingBottom={20}>
+          <XStack gap={12}>
             <Stack flex={1}>
               <BottomSheetSearchInput
                 value={inputValue}
@@ -136,12 +138,16 @@ const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, se
             {multiple && <Button circular chromeless onPress={handleClearAll} icon={<BrushCleaning size={18} />} />}
           </XStack>
           {selectOptions.map((group, groupIndex) => (
-            <View key={group.title || group.label || groupIndex} gap={5}>
-              <XStack gap={8} alignItems="center" justifyContent="flex-start">
-                <ProviderIcon provider={group.provider} />
-                <Text fontSize={12}>{group.label}</Text>
+            <View key={group.title || group.label || groupIndex} gap={12}>
+              <XStack gap={12} alignItems="center" justifyContent="flex-start" paddingHorizontal={4}>
+                <XStack width={32} height={32} borderRadius={8} alignItems="center" justifyContent="center">
+                  <ProviderIcon provider={group.provider} />
+                </XStack>
+                <Text fontSize={15} fontWeight="600" color="$gray12">
+                  {group.label}
+                </Text>
               </XStack>
-              <YStack gap={2}>
+              <YStack gap={6}>
                 {group.options.map(item => (
                   <Button
                     key={item.value}
@@ -151,12 +157,8 @@ const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, se
                     paddingHorizontal={8}
                     paddingVertical={8}
                     borderWidth={1}
-                    borderColor={
-                      selectedModels.includes(item.value) ? (isDark ? '$green20Dark' : '$green20Light') : 'transparent'
-                    }
-                    backgroundColor={
-                      selectedModels.includes(item.value) ? (isDark ? '$green10Dark' : '$green10Light') : 'transparent'
-                    }>
+                    borderColor={selectedModels.includes(item.value) ? '$green20' : 'transparent'}
+                    backgroundColor={selectedModels.includes(item.value) ? '$green10' : 'transparent'}>
                     <XStack gap={8} flex={1} alignItems="center" justifyContent="space-between" width="100%">
                       <XStack gap={8} flex={1} alignItems="center" maxWidth="80%">
                         {/* Model icon */}
@@ -170,7 +172,7 @@ const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, se
                       </XStack>
                       <XStack gap={8} alignItems="center" flexShrink={0}>
                         {/* Model tags */}
-                        <ModelTags model={item.model} size={11} style={{ flexShrink: 0 }} />
+                        <ModelTags model={item.model} size={11} />
                       </XStack>
                     </XStack>
                   </Button>

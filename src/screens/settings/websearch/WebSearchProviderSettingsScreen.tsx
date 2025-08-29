@@ -1,10 +1,10 @@
-import BottomSheet from '@gorhom/bottom-sheet'
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { RouteProp, useRoute } from '@react-navigation/native'
 import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert } from 'react-native'
-import { Button, Input, Stack, Text, useTheme, XStack, YStack } from 'tamagui'
+import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
 import { SettingContainer, SettingGroupTitle, SettingHelpText } from '@/components/settings'
@@ -13,23 +13,20 @@ import { ApiCheckSheet } from '@/components/settings/websearch/ApiCheckSheet'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { WEB_SEARCH_PROVIDER_CONFIG } from '@/config/websearchProviders'
 import { useWebSearchProvider } from '@/hooks/useWebsearchProviders'
+import { WebSearchStackParamList } from '@/navigators/settings/WebSearchStackNavigator'
 import WebSearchService from '@/services/WebSearchService'
 import { ApiStatus } from '@/types/assistant'
-import { RootStackParamList } from '@/types/naviagate'
 
-type WebsearchProviderSettingsRouteProp = RouteProp<RootStackParamList, 'WebSearchProviderSettingsScreen'>
+type WebsearchProviderSettingsRouteProp = RouteProp<WebSearchStackParamList, 'WebSearchProviderSettingsScreen'>
 
 export default function WebSearchProviderSettingsScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const navigation = useNavigation()
   const route = useRoute<WebsearchProviderSettingsRouteProp>()
 
   const [showApiKey, setShowApiKey] = useState(false)
   const [checkApiStatus, setCheckApiStatus] = useState<ApiStatus>('idle')
 
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheetModal>(null)
 
   const { providerId } = route.params
   const { provider, isLoading, updateProvider } = useWebSearchProvider(providerId)
@@ -47,7 +44,7 @@ export default function WebSearchProviderSettingsScreen() {
   if (!provider) {
     return (
       <SafeAreaContainer>
-        <HeaderBar title={t('settings.provider.not_found')} onBackPress={() => navigation.goBack()} />
+        <HeaderBar title={t('settings.provider.not_found')} />
         <SettingContainer>
           <Text textAlign="center" color="$gray10" paddingVertical={24}>
             {t('settings.provider.not_found_message')}
@@ -57,18 +54,12 @@ export default function WebSearchProviderSettingsScreen() {
     )
   }
 
-  const handleBackPress = () => {
-    navigation.goBack()
-  }
-
   const handleOpenBottomSheet = () => {
-    bottomSheetRef.current?.expand()
-    setIsBottomSheetOpen(true)
+    bottomSheetRef.current?.present()
   }
 
   const handleBottomSheetClose = () => {
-    bottomSheetRef.current?.close()
-    setIsBottomSheetOpen(false)
+    bottomSheetRef.current?.dismiss()
   }
 
   const toggleApiKeyVisibility = () => {
@@ -99,7 +90,7 @@ export default function WebSearchProviderSettingsScreen() {
           {
             text: t('common.ok'),
             style: 'cancel',
-            onPress: () => setIsBottomSheetOpen(false)
+            onPress: () => handleBottomSheetClose()
           }
         ])
       }
@@ -108,7 +99,7 @@ export default function WebSearchProviderSettingsScreen() {
         {
           text: t('common.ok'),
           style: 'cancel',
-          onPress: () => setIsBottomSheetOpen(false)
+          onPress: () => handleBottomSheetClose()
         }
       ])
       throw error
@@ -121,8 +112,8 @@ export default function WebSearchProviderSettingsScreen() {
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1, backgroundColor: theme.background.val }}>
-      <HeaderBar title={provider.name} onBackPress={handleBackPress} />
+    <SafeAreaContainer style={{ flex: 1 }}>
+      <HeaderBar title={provider.name} />
       <SettingContainer>
         {/* API Key 配置 */}
         {provider.type === 'api' && (
@@ -140,12 +131,16 @@ export default function WebSearchProviderSettingsScreen() {
 
             <XStack paddingVertical={8} gap={8} position="relative">
               <Input
+                paddingVertical={0}
                 flex={1}
                 placeholder={t('settings.websearch.api_key.placeholder')}
                 secureTextEntry={!showApiKey}
                 paddingRight={48}
                 value={provider?.apiKey || ''}
                 onChangeText={text => handleProviderConfigChange('apiKey', text)}
+                fontSize={14}
+                multiline={false}
+                numberOfLines={1}
               />
               <Stack
                 position="absolute"
@@ -177,20 +172,16 @@ export default function WebSearchProviderSettingsScreen() {
             <SettingGroupTitle>{t('settings.websearch.api_host')}</SettingGroupTitle>
           </XStack>
           <Input
+            paddingVertical={0}
             placeholder={t('settings.websearch.api_host.placeholder')}
             value={provider?.apiHost || ''}
             onChangeText={text => handleProviderConfigChange('apiHost', text)}
+            multiline={false}
+            numberOfLines={1}
           />
         </YStack>
       </SettingContainer>
-      <ApiCheckSheet
-        bottomSheetRef={bottomSheetRef}
-        isOpen={isBottomSheetOpen}
-        onClose={handleBottomSheetClose}
-        apiKey={provider?.apiKey || ''}
-        onStartModelCheck={checkSearch}
-        checkApiStatus={checkApiStatus}
-      />
+      <ApiCheckSheet ref={bottomSheetRef} onStartModelCheck={checkSearch} checkApiStatus={checkApiStatus} />
     </SafeAreaContainer>
   )
 }

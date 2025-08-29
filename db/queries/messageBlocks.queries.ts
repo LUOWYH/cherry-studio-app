@@ -16,7 +16,7 @@ import {
 } from '@/types/message'
 
 import { db } from '..'
-import { messageBlocks } from '../schema'
+import { messageBlocks, messages } from '../schema'
 const logger = loggerService.withContext('DataBase Message Blocks')
 
 type MessageBlockDbInsert = InferInsertModel<typeof messageBlocks>
@@ -240,7 +240,6 @@ export function transformDbToMessageBlock(dbRecord: any): MessageBlock {
 
 // MessageBlock 转换为数据库记录
 function transformMessageBlockToDb(messageBlock: MessageBlock): any {
-  logger.info('Transforming message block to DB record:', messageBlock)
   const base = {
     id: messageBlock.id,
     message_id: messageBlock.messageId,
@@ -485,10 +484,18 @@ export async function getBlockById(blockId: string): Promise<MessageBlock | null
 
 export async function deleteBlocksByTopicId(topicId: string): Promise<void> {
   try {
-    const blocks = await db.select().from(messageBlocks).where(eq(messageBlocks.message_id, topicId))
+    const messagesWithTopic = await db.select({ id: messages.id }).from(messages).where(eq(messages.topic_id, topicId))
+    const messageIds = messagesWithTopic.map(message => message.id)
+
+    if (messageIds.length === 0) {
+      logger.info(`No messages found for topic ID ${topicId}. Nothing to delete.`)
+      return
+    }
+
+    const blocks = await db.select().from(messageBlocks).where(inArray(messageBlocks.message_id, messageIds))
 
     if (blocks.length === 0) {
-      logger.info(`No blocks found for topic ID ${topicId}. Nothing to delete.`)
+      logger.info(`No blocks found for messages in topic ID ${topicId}. Nothing to delete.`)
       return
     }
 
@@ -497,6 +504,24 @@ export async function deleteBlocksByTopicId(topicId: string): Promise<void> {
     logger.info(`Successfully deleted ${blockIds.length} blocks for topic ID ${topicId}.`)
   } catch (error) {
     logger.error(`Error deleting blocks for topic ID ${topicId}:`, error)
+    throw error
+  }
+}
+
+export async function deleteBlocksByMessageId(messageId: string): Promise<void> {
+  try {
+    const blocks = await getBlocksByMessageId(messageId)
+
+    if (blocks.length === 0) {
+      logger.info(`No blocks found for message ID ${messageId}. Nothing to delete.`)
+      return
+    }
+
+    const blockIds = blocks.map(block => block.id)
+    await removeManyBlocks(blockIds)
+    logger.info(`Successfully deleted ${blockIds.length} blocks for message ID ${messageId}.`)
+  } catch (error) {
+    logger.error(`Error deleting blocks for message ID ${messageId}:`, error)
     throw error
   }
 }

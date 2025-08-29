@@ -1,9 +1,7 @@
 import { ChevronRight } from '@tamagui/lucide-icons'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Text, XStack } from 'tamagui'
 import * as DropdownMenu from 'zeego/dropdown-menu'
-
-import { useIsDark } from '@/utils'
 
 interface SelectOptionItem<T = any> {
   label: string
@@ -32,8 +30,6 @@ export function ISelect<T = any>({
   placeholder,
   width = '100%'
 }: ISelectProps<T>) {
-  const isDark = useIsDark()
-
   const findSelectedItem = (selectedValue: string): SelectOptionItem<T> | undefined => {
     for (const group of selectOptions) {
       const item = group.options.find(option => option.value === selectedValue)
@@ -53,7 +49,7 @@ export function ISelect<T = any>({
     itemLabel: string
   } | null>(null)
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (value) {
       for (const group of selectOptions) {
         const item = group.options.find(option => option.value === value)
@@ -79,7 +75,7 @@ export function ISelect<T = any>({
           justifyContent="space-between"
           gap={10}
           borderRadius={9}
-          backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}>
+          backgroundColor="$uiCardBackground">
           <XStack flex={1} alignItems="center" overflow="hidden" justifyContent="space-between">
             {selectedDisplayInfo ? (
               <>

@@ -3,7 +3,6 @@ import React from 'react'
 import { Text, XStack, YStack } from 'tamagui'
 
 import { Assistant } from '@/types/assistant'
-import { useIsDark } from '@/utils'
 
 interface AssistantItemRowProps {
   assistant: Assistant
@@ -11,8 +10,6 @@ interface AssistantItemRowProps {
 }
 
 const AssistantItemRow: FC<AssistantItemRowProps> = ({ assistant, onAssistantPress }) => {
-  const isDark = useIsDark()
-
   const handlePress = () => {
     onAssistantPress(assistant)
   }
@@ -24,7 +21,7 @@ const AssistantItemRow: FC<AssistantItemRowProps> = ({ assistant, onAssistantPre
       justifyContent="space-between"
       alignItems="center"
       borderRadius={16}
-      backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}
+      backgroundColor="$uiCardBackground"
       onPress={handlePress}>
       <XStack gap={14} flex={1} marginRight={10} maxWidth="75%">
         <Text fontSize={35}>{assistant.emoji?.replace(/\r\n/g, '')}</Text>

@@ -20,8 +20,6 @@ interface ModelTagsProps {
   showReasoning?: boolean
   showToolsCalling?: boolean
   size?: number
-  showLabel?: boolean
-  style?: any
 }
 
 export const ModelTags: React.FC<ModelTagsProps> = ({
@@ -29,13 +27,10 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
   showFree = true,
   showReasoning = true,
   showToolsCalling = true,
-  size = 12,
-  showLabel = false,
-  style
+  size = 12
 }) => {
   const { t } = useTranslation()
 
-  // !test
   const getTags = (
     model: Model,
     showFree: boolean,
@@ -53,8 +48,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (isVisionModel(model)) {
       result.push({
         key: 'vision',
-        color: '$foregroundGreen',
-        icon: <Eye size={size} color="$foregroundGreen" />,
+        color: '$green20',
+        icon: <Eye size={size} color="$green100" />,
         label: t('models.type.vision')
       })
     }
@@ -62,8 +57,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (isWebSearchModel(model)) {
       result.push({
         key: 'websearch',
-        color: '$foregroundBlue',
-        icon: <Globe size={size} color="$foregroundBlue" />,
+        color: '$blue20',
+        icon: <Globe size={size} color="$blue100" />,
         label: t('models.type.websearch')
       })
     }
@@ -71,8 +66,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (showReasoning && isReasoningModel(model)) {
       result.push({
         key: 'reasoning',
-        color: '$foregroundPurple',
-        icon: <Lightbulb size={size} color="$foregroundPurple" />,
+        color: '$purple20',
+        icon: <Lightbulb size={size} color="$purple100" />,
         label: t('models.type.reasoning')
       })
     }
@@ -80,8 +75,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (showToolsCalling && isFunctionCallingModel(model)) {
       result.push({
         key: 'function_calling',
-        color: '$foregroundOrange',
-        icon: <Wrench size={size} color="$foregroundOrange" />,
+        color: '$orange20',
+        icon: <Wrench size={size} color="$orange100" />,
         label: t('models.type.function_calling')
       })
     }
@@ -99,8 +94,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (showFree && isFreeModel(model)) {
       result.push({
         key: 'free',
-        color: '$foregroundYellow',
-        icon: <CircleDollarSign size={size} color="$foregroundYellow" />,
+        color: '$yellow20',
+        icon: <CircleDollarSign size={size} color="$yellow100" />,
         label: t('models.type.free')
       })
     }
@@ -108,8 +103,8 @@ export const ModelTags: React.FC<ModelTagsProps> = ({
     if (isRerankModel(model)) {
       result.push({
         key: 'rerank',
-        color: '$foregroundGray',
-        icon: <Repeat2 size={size} color="$foregroundGray" />,
+        color: '$pink20',
+        icon: <Repeat2 size={size} color="$pink100" />,
         label: t('models.type.rerank')
       })
     }

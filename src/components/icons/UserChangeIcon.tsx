@@ -1,13 +1,13 @@
 import React from 'react'
-import { useColorScheme } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+
+import { useTheme } from '@/hooks/useTheme'
 
 import { IconProps } from '.'
 
 export function UserChangeIcon(props: IconProps) {
-  const theme = useColorScheme()
-  const isDark = theme === 'dark'
-  const strokeColor = props.color || (isDark ? '#f9f9f9ff' : '#202020ff')
+  const { isDark } = useTheme()
+  const strokeColor = props.color || (isDark ? '#acf3a6ff' : '#81df94ff')
 
   return (
     <Svg width={props.size || 13} height={props.size || 13} viewBox="0 0 13 15" fill="none" {...props}>

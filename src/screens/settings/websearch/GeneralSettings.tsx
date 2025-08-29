@@ -4,44 +4,53 @@ import { Input, Slider, XStack, YStack } from 'tamagui'
 
 import { SettingGroup, SettingGroupTitle, SettingRow, SettingRowTitle } from '@/components/settings'
 import { CustomSwitch } from '@/components/ui/Switch'
-import { useIsDark } from '@/utils'
-import { getGreenColor } from '@/utils/color'
+import { useWebsearchSettings } from '@/hooks/useWebsearchProviders'
 
-interface GeneralSettingsProps {
-  searchWithDates: boolean
-  onSearchWithDatesChange: (value: boolean) => void
-  overrideSearchService: boolean
-  onOverrideSearchServiceChange: (value: boolean) => void
-  searchCount: number
-  onSearchCountChange: (value: number[]) => void
-  contentLimit: string
-  onContentLimitChange: (value: string) => void
-}
-
-export default function GeneralSettings({
-  searchWithDates,
-  onSearchWithDatesChange,
-  overrideSearchService,
-  onOverrideSearchServiceChange,
-  searchCount,
-  onSearchCountChange,
-  contentLimit,
-  onContentLimitChange
-}: GeneralSettingsProps) {
+export default function GeneralSettings() {
   const { t } = useTranslation()
-  const isDark = useIsDark()
+
+  const {
+    searchWithDates,
+    overrideSearchService,
+    searchCount,
+    contentLimit,
+    setSearchWithDates,
+    setOverrideSearchService,
+    setSearchCount,
+    setContentLimit
+  } = useWebsearchSettings()
+
+  // Handler for search count change
+  const handleSearchCountChange = (value: number[]) => {
+    setSearchCount(value[0])
+  }
+
+  // Handler for content limit change
+  const handleContentLimitChange = (value: string) => {
+    const numValue = parseInt(value, 10)
+
+    if (!isNaN(numValue)) {
+      setContentLimit(numValue)
+    } else if (value === '') {
+      setContentLimit(undefined)
+    }
+  }
 
   return (
     <YStack gap={8} paddingVertical={8}>
       <SettingGroupTitle>{t('settings.general.title')}</SettingGroupTitle>
       <SettingGroup>
         <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.searchWithDates')}</SettingRowTitle>
-          <CustomSwitch checked={searchWithDates} onCheckedChange={onSearchWithDatesChange} />
-        </SettingRow>
-        <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.overrideSearchService')}</SettingRowTitle>
-          <CustomSwitch checked={overrideSearchService} onCheckedChange={onOverrideSearchServiceChange} />
+          <SettingRowTitle>{t('settings.websearch.contentLengthLimit')}</SettingRowTitle>
+          <Input
+            height={24}
+            minWidth={52}
+            paddingVertical={0}
+            value={contentLimit?.toString() || ''}
+            onChangeText={handleContentLimitChange}
+            fontSize={14}
+            lineHeight={14 * 1.2}
+          />
         </SettingRow>
         <SettingRow>
           <YStack gap={10} flex={1}>
@@ -49,23 +58,22 @@ export default function GeneralSettings({
               <SettingRowTitle>{t('settings.websearch.searchCount')}</SettingRowTitle>
               <SettingRowTitle>{searchCount}</SettingRowTitle>
             </XStack>
-            <Slider defaultValue={[searchCount]} min={1} max={20} step={1} onValueChange={onSearchCountChange}>
-              <Slider.Track backgroundColor={getGreenColor(isDark, 20)}>
-                <Slider.TrackActive backgroundColor={getGreenColor(isDark, 100)} />
+            <Slider value={[searchCount]} min={1} max={20} step={1} onValueChange={handleSearchCountChange}>
+              <Slider.Track backgroundColor="$green20">
+                <Slider.TrackActive backgroundColor="$green100" />
               </Slider.Track>
-              <Slider.Thumb backgroundColor={getGreenColor(isDark, 100)} borderWidth={0} size={16} index={0} circular />
+              <Slider.Thumb backgroundColor="$green100" borderWidth={0} size={16} index={0} circular />
             </Slider>
           </YStack>
         </SettingRow>
+
         <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.contentLengthLimit')}</SettingRowTitle>
-          <Input
-            height={21}
-            minWidth={52}
-            paddingVertical={2}
-            value={contentLimit}
-            onChangeText={onContentLimitChange}
-          />
+          <SettingRowTitle>{t('settings.websearch.searchWithDates')}</SettingRowTitle>
+          <CustomSwitch checked={searchWithDates} onCheckedChange={setSearchWithDates} />
+        </SettingRow>
+        <SettingRow>
+          <SettingRowTitle>{t('settings.websearch.overrideSearchService')}</SettingRowTitle>
+          <CustomSwitch checked={overrideSearchService} onCheckedChange={setOverrideSearchService} />
         </SettingRow>
       </SettingGroup>
     </YStack>

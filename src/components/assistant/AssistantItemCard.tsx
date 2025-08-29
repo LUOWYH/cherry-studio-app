@@ -2,8 +2,6 @@ import React from 'react'
 import { Text, XStack, YStack } from 'tamagui'
 
 import { Assistant } from '@/types/assistant'
-import { useIsDark } from '@/utils'
-import { getGreenColor } from '@/utils/color'
 import { formateEmoji } from '@/utils/formats'
 
 import GroupTag from './market/GroupTag'
@@ -14,15 +12,13 @@ interface AssistantItemCardProps {
 }
 
 const AssistantItemCard = ({ assistant, onAssistantPress }: AssistantItemCardProps) => {
-  const isDark = useIsDark()
-
   const handlePress = () => {
     onAssistantPress(assistant)
   }
 
   return (
     <YStack
-      backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}
+      backgroundColor="$uiCardBackground"
       paddingHorizontal={14}
       paddingTop={30}
       paddingBottom={10}
@@ -45,10 +41,10 @@ const AssistantItemCard = ({ assistant, onAssistantPress }: AssistantItemCardPro
                 key={index}
                 group={group}
                 fontSize={8}
-                backgroundColor={getGreenColor(isDark, 10)}
-                color={getGreenColor(isDark, 100)}
+                backgroundColor="$green10"
+                color="$green100"
                 borderWidth={0.5}
-                borderColor={getGreenColor(isDark, 20)}
+                borderColor="$green20"
               />
             ))}
         </XStack>

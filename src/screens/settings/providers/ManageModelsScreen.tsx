@@ -1,13 +1,13 @@
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { RouteProp, useRoute } from '@react-navigation/native'
 import { FlashList, ListRenderItemInfo } from '@shopify/flash-list'
 import { Minus, Plus } from '@tamagui/lucide-icons'
 import { debounce, groupBy, isEmpty, uniqBy } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { Accordion, Button, ScrollView, Tabs, Text, useTheme, YStack } from 'tamagui'
+import { Accordion, Button, ScrollView, Tabs, Text, YStack } from 'tamagui'
 
-import { SettingContainer } from '@/components/settings'
+import { SettingContainer, SettingGroup } from '@/components/settings'
 import { HeaderBar } from '@/components/settings/HeaderBar'
 import { ModelGroup } from '@/components/settings/providers/ModelGroup'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
@@ -19,17 +19,15 @@ import { isReasoningModel } from '@/config/models/reasoning'
 import { isRerankModel } from '@/config/models/rerank'
 import { isVisionModel } from '@/config/models/vision'
 import { isWebSearchModel } from '@/config/models/webSearch'
-import { useProvider } from '@/hooks/useProviders'
+import { ProvidersStackParamList } from '@/navigators/settings/ProvidersStackNavigator'
 import { fetchModels } from '@/services/ApiService'
 import { loggerService } from '@/services/LoggerService'
+import { getProviderById, saveProvider } from '@/services/ProviderService'
 import { Model, Provider } from '@/types/assistant'
-import { RootStackParamList } from '@/types/naviagate'
-import { useIsDark } from '@/utils'
-import { getGreenColor } from '@/utils/color'
 import { getDefaultGroupName } from '@/utils/naming'
 const logger = loggerService.withContext('ManageModelsScreen')
 
-type ProviderSettingsRouteProp = RouteProp<RootStackParamList, 'ManageModelsScreen'>
+type ProviderSettingsRouteProp = RouteProp<ProvidersStackParamList, 'ManageModelsScreen'>
 
 const getIsModelInProvider = (providerModels: Model[]) => {
   const providerModelIds = new Set(providerModels.map(m => m.id))
@@ -107,9 +105,6 @@ const TAB_CONFIGS = [
 
 export default function ManageModelsScreen() {
   const { t } = useTranslation()
-  const isDark = useIsDark()
-  const theme = useTheme()
-  const navigation = useNavigation()
   const route = useRoute<ProviderSettingsRouteProp>()
 
   const [searchText, setSearchText] = useState('')
@@ -124,7 +119,8 @@ export default function ManageModelsScreen() {
   }, 300)
 
   const { providerId } = route.params
-  const { provider, updateProvider } = useProvider(providerId)
+  const [provider, setProvider] = useState<Provider | undefined>(undefined)
+  // const { provider, updateProvider } = useProvider(providerId)
 
   const isModelInCurrentProvider = getIsModelInProvider(provider?.models || [])
   const isAllModelsInCurrentProvider = getIsAllInProvider(isModelInCurrentProvider)
@@ -135,7 +131,7 @@ export default function ManageModelsScreen() {
   // 监听 searchText 变化，触发防抖更新
   useEffect(() => {
     debouncedSetSearch(searchText)
-    
+
     // 清理函数，组件卸载时取消防抖
     return () => {
       debouncedSetSearch.cancel()
@@ -145,7 +141,8 @@ export default function ManageModelsScreen() {
   const handleUpdateModels = async (newModels: Model[]) => {
     if (!provider) return
     const updatedProvider = { ...provider, models: newModels }
-    await updateProvider(updatedProvider)
+    setProvider(updatedProvider)
+    await saveProvider(updatedProvider)
   }
 
   const onAddModel = async (model: Model) => {
@@ -167,12 +164,15 @@ export default function ManageModelsScreen() {
 
   useEffect(() => {
     const fetchAndSetModels = async () => {
-      if (!provider) return
+      const fetchedProvider = await getProviderById(providerId)
+      setProvider(fetchedProvider)
+
+      if (!fetchedProvider) return
       setIsLoading(true)
 
       try {
-        const modelsFromApi = await fetchModels(provider)
-        const transformedModels = transformApiModels(modelsFromApi, provider)
+        const modelsFromApi = await fetchModels(fetchedProvider)
+        const transformedModels = transformApiModels(modelsFromApi, fetchedProvider)
         setAllModels(uniqBy(transformedModels, 'id'))
       } catch (error) {
         logger.error('Failed to fetch models', error)
@@ -183,7 +183,7 @@ export default function ManageModelsScreen() {
     }
 
     fetchAndSetModels()
-  })
+  }, [providerId])
 
   const renderModelGroupItem = ({ item: [groupName, currentModels], index }: ListRenderItemInfo<[string, Model[]]>) => (
     <ModelGroup
@@ -195,16 +195,12 @@ export default function ManageModelsScreen() {
         <Button
           size={20}
           chromeless
+          circular
           icon={
             isAllModelsInCurrentProvider(groupButtonModels) ? (
-              <Minus size={14} borderRadius={99} backgroundColor="$red20" color="$red100" />
+              <Minus size={20} borderRadius={99} backgroundColor="$red20" color="$red100" />
             ) : (
-              <Plus
-                size={14}
-                borderRadius={99}
-                backgroundColor={getGreenColor(isDark, 20)}
-                color={getGreenColor(isDark, 100)}
-              />
+              <Plus size={20} borderRadius={99} backgroundColor="$green20" color="$green100" />
             )
           }
           onPress={
@@ -216,18 +212,14 @@ export default function ManageModelsScreen() {
       )}
       renderModelButton={model => (
         <Button
-          size={14}
+          size={16}
           chromeless
+          circular
           icon={
             isModelInCurrentProvider(model.id) ? (
-              <Minus size={14} borderRadius={99} backgroundColor="$red20" color="$red100" />
+              <Minus size={16} borderRadius={99} backgroundColor="$red20" color="$red100" />
             ) : (
-              <Plus
-                size={14}
-                borderRadius={99}
-                backgroundColor={getGreenColor(isDark, 20)}
-                color={getGreenColor(isDark, 100)}
-              />
+              <Plus size={16} borderRadius={99} backgroundColor="$green20" color="$green100" />
             )
           }
           onPress={isModelInCurrentProvider(model.id) ? () => onRemoveModel(model) : () => onAddModel(model)}
@@ -239,69 +231,70 @@ export default function ManageModelsScreen() {
   const getTabStyle = (isActive: boolean) => ({
     height: '100%',
     backgroundColor: isActive ? '$background' : 'transparent',
-    borderRadius: 15
+    borderRadius: 20
   })
 
   return (
     <SafeAreaContainer
       style={{
-        flex: 1,
-        backgroundColor: theme.background.val
+        flex: 1
       }}>
-      <HeaderBar title={provider?.name || t('settings.models.manage_models')} onBackPress={() => navigation.goBack()} />
-      <SettingContainer>
-        {/* Filter Tabs */}
-        <Tabs
-          defaultValue="all"
-          value={activeFilterType}
-          onValueChange={setActiveFilterType}
-          orientation="horizontal"
-          flexDirection="column"
-          height={34}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Tabs.List aria-label="Model filter tabs" gap="10" flexDirection="row">
-              {TAB_CONFIGS.map(({ value, i18nKey }) => (
-                <Tabs.Tab key={value} value={value} {...getTabStyle(activeFilterType === value)}>
-                  <Text>{t(i18nKey)}</Text>
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </ScrollView>
-        </Tabs>
+      <HeaderBar title={provider?.name || t('settings.models.manage_models')} />
+      {isLoading ? (
+        <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator />
+        </SafeAreaContainer>
+      ) : (
+        <SettingContainer
+          paddingBottom={0}
+          onStartShouldSetResponder={() => false}
+          onMoveShouldSetResponder={() => false}>
+          {/* Filter Tabs */}
+          <Tabs
+            defaultValue="all"
+            value={activeFilterType}
+            onValueChange={setActiveFilterType}
+            orientation="horizontal"
+            flexDirection="column"
+            height={34}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Tabs.List aria-label="Model filter tabs" gap="10" flexDirection="row">
+                {TAB_CONFIGS.map(({ value, i18nKey }) => (
+                  <Tabs.Tab key={value} value={value} {...getTabStyle(activeFilterType === value)}>
+                    <Text>{t(i18nKey)}</Text>
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+            </ScrollView>
+          </Tabs>
 
-        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-          <YStack flex={1} gap={24}>
-            {/* Search Card */}
-            <SearchInput placeholder={t('settings.models.search')} value={searchText} onChangeText={setSearchText} />
+          <SearchInput placeholder={t('settings.models.search')} value={searchText} onChangeText={setSearchText} />
 
-            {/* Model List Card with Accordion */}
-            {isLoading ? (
-              <SafeAreaContainer>
-                <ActivityIndicator />
-              </SafeAreaContainer>
-            ) : (
-              <YStack flex={1}>
-                {sortedModelGroups.length > 0 ? (
-                  <Accordion overflow="hidden" type="multiple">
-                    <FlashList
-                      showsVerticalScrollIndicator={false}
-                      data={sortedModelGroups}
-                      renderItem={renderModelGroupItem}
-                      keyExtractor={([groupName]) => groupName}
-                      estimatedItemSize={60}
-                      extraData={provider}
-                    />
-                  </Accordion>
-                ) : (
-                  <Text textAlign="center" color="$gray10" paddingVertical={24}>
+          <YStack flex={1} height="100%">
+            <SettingGroup flex={1}>
+              {sortedModelGroups.length > 0 ? (
+                <Accordion overflow="hidden" type="multiple" flex={1}>
+                  <FlashList
+                    data={sortedModelGroups}
+                    renderItem={renderModelGroupItem}
+                    keyExtractor={([groupName]) => groupName}
+                    estimatedItemSize={60}
+                    showsVerticalScrollIndicator={false}
+                    extraData={provider}
+                    contentContainerStyle={{ paddingBottom: 24 }}
+                  />
+                </Accordion>
+              ) : (
+                <YStack flex={1} justifyContent="center" alignItems="center">
+                  <Text textAlign="center" color="$gray10">
                     {t('models.no_models')}
                   </Text>
-                )}
-              </YStack>
-            )}
+                </YStack>
+              )}
+            </SettingGroup>
           </YStack>
-        </ScrollView>
-      </SettingContainer>
+        </SettingContainer>
+      )}
     </SafeAreaContainer>
   )
 }

@@ -4,9 +4,9 @@ import React, { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Stack, Text, useTheme, View, XStack, YStack } from 'tamagui'
 
+import { useTheme as useCustomTheme } from '@/hooks/useTheme'
 import { loggerService } from '@/services/LoggerService'
 import { Citation } from '@/types/websearch'
-import { useIsDark } from '@/utils'
 import { getWebsiteBrand } from '@/utils/websearch'
 
 import FallbackFavicon from '../icons/FallbackFavicon'
@@ -17,7 +17,6 @@ interface CitationSheetProps {
 }
 
 const CitationTitle = ({ number, title }: { number: number; title: string }) => {
-  const isDark = useIsDark()
   return (
     <XStack gap={11} alignItems="center">
       <Stack
@@ -27,11 +26,11 @@ const CitationTitle = ({ number, title }: { number: number; title: string }) => 
         gap={2}
         justifyContent="center"
         alignItems="center"
-        borderColor={isDark ? '$green20Dark' : '$green20Light'}
-        backgroundColor={isDark ? '$green10Dark' : '$green10Light'}
+        borderColor="$green20"
+        backgroundColor="$green10"
         minWidth={20}
         minHeight={20}>
-        <Text fontSize={10} textAlign="center" color={isDark ? '$green100Light' : '$green100Dark'}>
+        <Text fontSize={10} textAlign="center" color="$green100">
           {number}
         </Text>
       </Stack>
@@ -62,13 +61,12 @@ const Footer = ({ url, title }: { url: string; title: string }) => (
 )
 
 const CitationCard = ({ citation, onPress }: { citation: Citation; onPress: (url: string) => void }) => {
-  const isDark = useIsDark()
   return (
     <View paddingHorizontal={30} paddingVertical={20}>
       <YStack
         gap={5}
         padding={10}
-        backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}
+        backgroundColor="$uiCardBackground"
         borderRadius={8}
         onPress={() => onPress(citation.url)}>
         <CitationTitle number={citation.number} title={citation.title || ''} />
@@ -82,7 +80,7 @@ const CitationCard = ({ citation, onPress }: { citation: Citation; onPress: (url
 const CitationSheet = forwardRef<BottomSheetModal, CitationSheetProps>(({ citations }, ref) => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const isDark = useIsDark()
+  const { isDark } = useCustomTheme()
 
   // 添加背景组件渲染函数
   const renderBackdrop = (props: any) => (
@@ -121,7 +119,7 @@ const CitationSheet = forwardRef<BottomSheetModal, CitationSheetProps>(({ citati
       }}
       backdropComponent={renderBackdrop}>
       <BottomSheetScrollView showsVerticalScrollIndicator={false}>
-        <Stack justifyContent="center" alignItems="center" paddingTop="$4">
+        <Stack justifyContent="center" alignItems="center" paddingHorizontal={20} paddingBottom={20}>
           <Text fontSize={20} lineHeight={22} fontWeight={600}>
             {t('common.source')}
           </Text>

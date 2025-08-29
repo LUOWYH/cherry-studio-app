@@ -1,12 +1,6 @@
 {
   "translation": {
     "assistants": {
-      "create": {
-        "title": "Create Assistant"
-      },
-      "edit": {
-        "title": "Edit Assistant"
-      },
       "market": {
         "add.success": "Add {{assistant_name}} Successful",
         "button.chat": "Chat Now",
@@ -46,6 +40,7 @@
       "title": "Assistants",
       "title.create": "Create Assistant",
       "title.edit": "Edit Assistant",
+      "title.mine": "My assistant",
       "title.recent": "Recent Assistants"
     },
     "button": {
@@ -91,10 +86,13 @@
       "cherry_studio_description": "A Powerful AI assistant for producer",
       "clear_all": "Clear All",
       "close": "Close",
+      "confirm": "Confirm",
+      "delete": "Delete",
       "description": "Description",
       "enabled": "Enabled",
       "error_occurred": "An error occurred",
       "file": "File",
+      "generateImage": "Create an image",
       "language": "Language",
       "last_month": "Last Month",
       "last_week": "Last Week",
@@ -116,7 +114,42 @@
       "today": "Today",
       "tool": "Tool",
       "visit": "Visit",
+      "websearch": "Web Search",
       "yesterday": "Yesterday"
+    },
+    "error": {
+      "backup": {
+        "file_format": "Backup file format error",
+        "file_invalid": "The backup file is invalid. You need to export it to a mobile device through Cherry Studio.",
+        "title": "Backup failed"
+      },
+      "chat": {
+        "response": "An error occurred. If no API key is configured, please go to Settings > Model Provider to set up the key."
+      },
+      "http": {
+        "400": "Request error, please check if the request parameters are correct. If you have modified the model settings, please reset them to the default settings.",
+        "401": "Authentication failed, please check if the API key is correct.",
+        "403": "Access denied. Please translate the specific error message for details or contact the service provider to inquire about the reason for the restriction.",
+        "404": "Model does not exist or the request path is incorrect",
+        "429": "The request rate has exceeded the limit. Please try again later.",
+        "500": "Server error, please try again later",
+        "502": "Gateway error, please try again later",
+        "503": "Service unavailable, please try again later",
+        "504": "Gateway timeout, please try again later."
+      },
+      "missing_user_message": "Unable to switch model response: The original user message has been deleted. Please send a new message to get a response from this model.",
+      "model": {
+        "exists": "Model already exists"
+      },
+      "no_api_key": "API key is not configured",
+      "pause_placeholder": "Interrupted",
+      "provider_disabled": "Model provider not enabled",
+      "render": {
+        "description": "Failed to render message content. Please check if the message format is correct.",
+        "title": "Rendering error"
+      },
+      "unknown": "Unknown error",
+      "user_message_not_found": "Unable to locate the original user message"
     },
     "errors": {
       "cannotOpenLink": "Cannot open link: {{error}}",
@@ -145,6 +178,15 @@
         "title": "Topic"
       }
     },
+    "message": {
+      "delete_message": "Delete Message",
+      "delete_translation": "Remove Translation",
+      "searching": "Searching...",
+      "translate_message": "Translate Message",
+      "websearch": {
+        "fetch_complete": "Completed {{count}} searches..."
+      }
+    },
     "models": {
       "no_models": "No models available",
       "type": {
@@ -168,13 +210,16 @@
       "noContent": "No {{type}} content yet"
     },
     "provider": {
+      "302ai": "302.AI",
       "aihubmix": "AiHubMix",
       "alayanew": "Alaya NeW",
       "anthropic": "Anthropic",
+      "aws-bedrock": "AWS Bedrock",
       "azure-openai": "Azure OpenAI",
       "baichuan": "Baichuan",
       "baidu-cloud": "Baidu Cloud",
       "burncloud": "BurnCloud",
+      "cephalon": "Cephalon",
       "copilot": "GitHub Copilot",
       "dashscope": "Alibaba Cloud",
       "deepseek": "DeepSeek",
@@ -191,11 +236,13 @@
       "hyperbolic": "Hyperbolic",
       "infini": "Infini",
       "jina": "Jina",
+      "lanyun": "LANYUN",
       "lmstudio": "LM Studio",
       "minimax": "MiniMax",
       "mistral": "Mistral",
       "modelscope": "ModelScope",
       "moonshot": "Moonshot",
+      "new-api": "New API",
       "nvidia": "Nvidia",
       "o3": "O3",
       "ocoolai": "ocoolAI",
@@ -203,14 +250,17 @@
       "openai": "OpenAI",
       "openrouter": "OpenRouter",
       "perplexity": "Perplexity",
+      "ph8": "PH8",
+      "poe": "Poe",
       "ppio": "PPIO",
-      "qiniu": "Qiniu",
+      "qiniu": "Qiniu AI",
       "qwenlm": "QwenLM",
       "silicon": "SiliconFlow",
       "stepfun": "StepFun",
       "tencent-cloud-ti": "Tencent Cloud TI",
       "together": "Together",
       "tokenflux": "TokenFlux",
+      "vertexai": "Vertex AI",
       "voyageai": "Voyage AI",
       "xirang": "State Cloud Xirang",
       "yi": "Yi",
@@ -248,11 +298,11 @@
           "name": "Default Assistant"
         },
         "empty": "No Assistant yet...",
-        "title": "Default Assistant",
-        "topic_naming_assistant": {
-          "description": "Assistant used when automatically naming a new topic",
-          "name": "Topic Naming Assistant"
+        "quick_assistant": {
+          "description": "Assistant used for simple tasks such as topic naming and keyword extraction",
+          "name": "Quick Assistant"
         },
+        "title": "Default Assistant",
         "translate_assistant": {
           "description": "Assistant used for translation service",
           "name": "Translation Assistant"
@@ -261,17 +311,21 @@
       "assistant.show.icon": "Show model icon",
       "data": {
         "app_data": "App Data",
+        "app_data_location": "App data location",
         "app_knowledge": "Knowledge Base Files",
         "app_knowledge.remove_all": "Remove Files",
         "app_logs": "App Logs",
         "backup": "Data Backup",
         "basic_title": "Basic Data Settings",
         "clear_cache": {
-          "button": "Clear Cache",
+          "button": "Clear Cache ({{cacheSize}})",
           "title": "Clear Cache"
         },
         "cloud_backup": "Cloud Backup Settings",
         "data.title": "Data Directory",
+        "data_reset": {
+          "error": "Data reset failed. Please try again or contact support if the problem persists."
+        },
         "landrop": {
           "filename": "File Name",
           "scan_qr_code": {
@@ -292,8 +346,11 @@
           },
           "title": "Landrop"
         },
+        "log_location": "Log file location",
         "recovery": "Data Recovery",
         "reset": "Data Reset",
+        "reset_success": "Data reset successful! The app has been restored to its initial state.",
+        "reset_warning": "Are you sure you want to reset all data? This will delete all conversations, messages, and user-created content. This action cannot be undone.",
         "restore": {
           "error": "Restore Error",
           "error_message": "An error occurred during the restore process. Please check the file and try again.",
@@ -344,6 +401,12 @@
         "token_placeholder": "Joplin Authorization Token",
         "url": "Joplin Web Clipper Service URL",
         "url_placeholder": "http://127.0.0.1:41184/"
+      },
+      "mcp": {
+        "errors": {
+          "32000": "MCP server error",
+          "toolNotFound": "Tool '{{name}}' not found"
+        }
       },
       "modelAndService": "AI Models & Services",
       "models": {
@@ -402,6 +465,11 @@
         "default_vault_placeholder": "Please select the default Obsidian vault",
         "title": "Obsidian Configuration"
       },
+      "personal": {
+        "name": "Username",
+        "namePlaceholder": "Please enter your username",
+        "title": "Personal Settings"
+      },
       "provider": {
         "add.name": "Provider Name",
         "add.name.placeholder": "Required e.g. OpenAI",
@@ -425,6 +493,12 @@
           "free_bills": "Free Bills",
           "login": "Log in",
           "title": "{{provider}} Service"
+        },
+        "check_failed": {
+          "api_key_empty": "API key cannot be empty",
+          "model_api_key_empty": "Model and API key cannot be empty",
+          "model_empty": "Model cannot be empty.",
+          "title": "Model check failed"
         },
         "delete.content": "Are you sure you want to delete this provider?",
         "delete.title": "Delete Provider",

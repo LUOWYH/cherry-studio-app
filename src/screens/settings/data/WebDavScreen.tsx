@@ -16,8 +16,8 @@ export default function WebDavScreen() {
   const { t } = useTranslation()
 
   return (
-    <SafeAreaContainer style={{ flex: 1, backgroundColor: theme.background.val }}>
-      <HeaderBar title={t('settings.webdav.title')} onBackPress={() => navigation.goBack()} />
+    <SafeAreaContainer style={{ flex: 1 }}>
+      <HeaderBar title={t('settings.webdav.title')} />
       <ScrollView flex={1} backgroundColor="$background">
         <SettingContainer>
           <YStack gap={24} flex={1} paddingHorizontal="$4" />

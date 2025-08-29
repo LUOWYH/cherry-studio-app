@@ -1,11 +1,11 @@
-import BottomSheet from '@gorhom/bottom-sheet'
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { RouteProp, useRoute } from '@react-navigation/native'
 import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import { sortBy } from 'lodash'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert } from 'react-native'
-import { Button, Input, Stack, Text, useTheme, XStack, YStack } from 'tamagui'
+import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
 import { SettingContainer, SettingGroupTitle, SettingHelpText } from '@/components/settings'
@@ -13,21 +13,19 @@ import { HeaderBar } from '@/components/settings/HeaderBar'
 import { ApiCheckSheet } from '@/components/settings/providers/ApiCheckSheet'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { isEmbeddingModel } from '@/config/models/embedding'
-import { PROVIDER_CONFIG } from '@/config/providers'
+import { PROVIDER_URLS } from '@/config/providers'
 import { useProvider } from '@/hooks/useProviders'
+import { ProvidersStackParamList } from '@/navigators/settings/ProvidersStackNavigator'
 import { checkApi } from '@/services/ApiService'
 import { loggerService } from '@/services/LoggerService'
 import { ApiStatus, Model } from '@/types/assistant'
-import { NavigationProps, RootStackParamList } from '@/types/naviagate'
 import { getModelUniqId } from '@/utils/model'
 const logger = loggerService.withContext('ApiServiceScreen')
 
-type ProviderSettingsRouteProp = RouteProp<RootStackParamList, 'ApiServiceScreen'>
+type ProviderSettingsRouteProp = RouteProp<ProvidersStackParamList, 'ApiServiceScreen'>
 
 export default function ApiServiceScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const navigation = useNavigation<NavigationProps>()
   const route = useRoute<ProviderSettingsRouteProp>()
 
   const { providerId } = route.params
@@ -36,11 +34,20 @@ export default function ApiServiceScreen() {
   const [showApiKey, setShowApiKey] = useState(false)
   const [selectedModel, setSelectedModel] = useState<Model | undefined>()
   const [checkApiStatus, setCheckApiStatus] = useState<ApiStatus>('idle')
+  const [apiKey, setApiKey] = useState(provider?.apiKey || '')
+  const [apiHost, setApiHost] = useState(provider?.apiHost || '')
 
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheetModal>(null)
 
-  const webSearchProviderConfig = provider?.id ? PROVIDER_CONFIG[provider.id] : undefined
+  // 当 provider 改变时更新本地状态
+  React.useEffect(() => {
+    if (provider) {
+      setApiKey(provider.apiKey || '')
+      setApiHost(provider.apiHost || '')
+    }
+  }, [provider])
+
+  const webSearchProviderConfig = provider?.id ? PROVIDER_URLS[provider.id] : undefined
   const apiKeyWebsite = webSearchProviderConfig?.websites?.apiKey
 
   if (isLoading) {
@@ -54,7 +61,7 @@ export default function ApiServiceScreen() {
   if (!provider) {
     return (
       <SafeAreaContainer>
-        <HeaderBar title={t('settings.provider.not_found')} onBackPress={() => navigation.goBack()} />
+        <HeaderBar title={t('settings.provider.not_found')} />
         <SettingContainer>
           <Text textAlign="center" color="$gray10" paddingVertical={24}>
             {t('settings.provider.not_found_message')}
@@ -81,13 +88,11 @@ export default function ApiServiceScreen() {
       ]
 
   const handleOpenBottomSheet = () => {
-    bottomSheetRef.current?.expand()
-    setIsBottomSheetOpen(true)
+    bottomSheetRef.current?.present()
   }
 
   const handleBottomSheetClose = () => {
-    bottomSheetRef.current?.close()
-    setIsBottomSheetOpen(false)
+    bottomSheetRef.current?.dismiss()
   }
 
   const handleModelChange = (value: string) => {
@@ -106,17 +111,38 @@ export default function ApiServiceScreen() {
   }
 
   const handleProviderConfigChange = async (key: 'apiKey' | 'apiHost', value: string) => {
+    if (key === 'apiKey') {
+      setApiKey(value)
+    } else if (key === 'apiHost') {
+      setApiHost(value)
+    }
+
     const updatedProvider = { ...provider, [key]: value }
     await updateProvider(updatedProvider)
   }
 
-  const handleBackPress = () => {
-    navigation.goBack()
-  }
-
   // 模型检测处理
   const handleStartModelCheck = async () => {
-    if (!selectedModel) return
+    if (!selectedModel || !apiKey) {
+      let errorKey = ''
+
+      if (!selectedModel && !apiKey) {
+        errorKey = 'model_api_key_empty'
+      } else if (!selectedModel) {
+        errorKey = 'model_empty'
+      } else if (!apiKey) {
+        errorKey = 'api_key_empty'
+      }
+
+      Alert.alert(t('settings.provider.check_failed.title'), t(`settings.provider.check_failed.${errorKey}`), [
+        {
+          text: t('common.ok'),
+          style: 'cancel',
+          onPress: () => handleBottomSheetClose()
+        }
+      ])
+      return
+    }
 
     try {
       setCheckApiStatus('processing')
@@ -131,7 +157,7 @@ export default function ApiServiceScreen() {
 
       setCheckApiStatus('error')
 
-      Alert.alert(t('settings.websearch.check_fail'), errorMessage, [
+      Alert.alert(t('settings.provider.check_failed.title'), errorMessage, [
         {
           text: t('common.ok'),
           style: 'cancel',
@@ -149,10 +175,9 @@ export default function ApiServiceScreen() {
   return (
     <SafeAreaContainer
       style={{
-        flex: 1,
-        backgroundColor: theme.background.val
+        flex: 1
       }}>
-      <HeaderBar title={t('settings.provider.api_service')} onBackPress={handleBackPress} />
+      <HeaderBar title={t('settings.provider.api_service')} />
 
       <SettingContainer>
         {/* API Key 配置 */}
@@ -170,12 +195,16 @@ export default function ApiServiceScreen() {
 
           <XStack paddingVertical={8} gap={8} position="relative">
             <Input
+              paddingVertical={0}
               flex={1}
               placeholder={t('settings.provider.api_key.placeholder')}
               secureTextEntry={!showApiKey}
               paddingRight={48}
-              value={provider?.apiKey || ''}
+              value={apiKey}
               onChangeText={text => handleProviderConfigChange('apiKey', text)}
+              fontSize={14}
+              multiline={false}
+              numberOfLines={1}
             />
             <Stack
               position="absolute"
@@ -206,21 +235,21 @@ export default function ApiServiceScreen() {
             <SettingGroupTitle>{t('settings.provider.api_host')}</SettingGroupTitle>
           </XStack>
           <Input
+            paddingVertical={0}
             placeholder={t('settings.provider.api_host.placeholder')}
-            value={provider?.apiHost || ''}
+            value={apiHost}
             onChangeText={text => handleProviderConfigChange('apiHost', text)}
+            multiline={false}
+            numberOfLines={1}
           />
         </YStack>
       </SettingContainer>
 
       <ApiCheckSheet
-        bottomSheetRef={bottomSheetRef}
-        isOpen={isBottomSheetOpen}
-        onClose={handleBottomSheetClose}
+        ref={bottomSheetRef}
         selectedModel={selectedModel}
         onModelChange={handleModelChange}
         selectOptions={selectOptions}
-        apiKey={provider?.apiKey || ''}
         onStartModelCheck={handleStartModelCheck}
         checkApiStatus={checkApiStatus}
       />

@@ -1,10 +1,9 @@
-import BottomSheet from '@gorhom/bottom-sheet'
-import { useNavigation } from '@react-navigation/native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert } from 'react-native'
-import { Button, Input, Stack, Text, useTheme, XStack, YStack } from 'tamagui'
+import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
 import { SettingContainer, SettingGroupTitle } from '@/components/settings'
@@ -36,13 +35,10 @@ export type ProviderConfig = {
 
 export default function ProviderSettingsScreen({ config }: { config: ProviderConfig }) {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const navigation = useNavigation()
 
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({})
   const [checkApiStatus, setCheckApiStatus] = useState<ApiStatus>('idle')
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheetModal>(null)
   const { provider, isLoading, updateProvider } = useDataBackupProvider(config.providerType)
 
   if (isLoading) {
@@ -56,7 +52,7 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
   if (!provider) {
     return (
       <SafeAreaContainer>
-        <HeaderBar title={t('settings.provider.not_found')} onBackPress={() => navigation.goBack()} />
+        <HeaderBar title={t('settings.provider.not_found')} />
         <SettingContainer>
           <Text textAlign="center" color="$gray10" paddingVertical={24}>
             {t('settings.provider.not_found_message')}
@@ -66,17 +62,12 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
     )
   }
 
-  const handleBackPress = () => {
-    navigation.goBack()
-  }
-
   const handleOpenBottomSheet = () => {
-    bottomSheetRef.current?.expand()
-    setIsBottomSheetOpen(true)
+    bottomSheetRef.current?.present()
   }
 
   const handleBottomSheetClose = () => {
-    setIsBottomSheetOpen(false)
+    bottomSheetRef.current?.dismiss()
   }
 
   const toggleApiKeyVisibility = (key: string) => {
@@ -118,8 +109,8 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1, backgroundColor: theme.background.val }}>
-      <HeaderBar title={t(config.titleKey)} onBackPress={handleBackPress} />
+    <SafeAreaContainer style={{ flex: 1 }}>
+      <HeaderBar title={t(config.titleKey)} />
       <SettingContainer>
         {config.fields.map((field, index) => (
           <YStack key={index} gap={8}>
@@ -129,6 +120,9 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
                   <SettingGroupTitle>{t(field.titleKey)}</SettingGroupTitle>
                 </XStack>
                 <Input
+                  paddingVertical={0}
+                  fontSize={14}
+                  lineHeight={14 * 1.2}
                   placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
                   value={provider[field.key] || ''}
                   onChangeText={text => handleProviderConfigChange(field.key, text)}
@@ -158,6 +152,7 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
 
                 <XStack paddingVertical={8} gap={8} position="relative">
                   <Input
+                    paddingVertical={0}
                     flex={1}
                     placeholder={field.placeholderKey ? t(field.placeholderKey) : ''}
                     secureTextEntry={!showApiKey[field.key]}
@@ -209,14 +204,7 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
           </YStack>
         ))}
       </SettingContainer>
-      <ApiCheckSheet
-        bottomSheetRef={bottomSheetRef}
-        isOpen={isBottomSheetOpen}
-        apiKey={provider[config.fields.find(f => f.type === 'password')?.key || ''] || ''}
-        onClose={handleBottomSheetClose}
-        onStartModelCheck={checkConnection}
-        checkApiStatus={checkApiStatus}
-      />
+      <ApiCheckSheet ref={bottomSheetRef} onStartModelCheck={checkConnection} checkApiStatus={checkApiStatus} />
     </SafeAreaContainer>
   )
 }

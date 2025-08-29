@@ -1,3 +1,4 @@
+import { DrawerNavigationProp } from '@react-navigation/drawer'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from '@tamagui/linear-gradient'
 import { UserRoundPen } from '@tamagui/lucide-icons'
@@ -6,10 +7,9 @@ import React from 'react'
 import { Text, XStack, YStack } from 'tamagui'
 
 import { useAssistant } from '@/hooks/useAssistant'
+import { useTheme } from '@/hooks/useTheme'
+import { HomeStackNavigationProp } from '@/navigators/HomeStackNavigator'
 import { Topic } from '@/types/assistant'
-import { NavigationProps } from '@/types/naviagate'
-import { useIsDark } from '@/utils'
-import { getGreenColor, getTextSecondaryColor } from '@/utils/color'
 import { formateEmoji } from '@/utils/formats'
 
 import { ModelChangeIcon } from '../icons/ModelChangeIcon'
@@ -28,37 +28,29 @@ interface ActionTagProps {
 }
 
 const ActionTag: FC<ActionTagProps> = ({ icon, label, onPress }) => {
-  const isDark = useIsDark()
   return (
     <XStack
       gap={5}
       paddingHorizontal={12}
       paddingVertical={5}
-      backgroundColor="$gray20"
+      backgroundColor="$green10"
       borderWidth={0.5}
       borderRadius={99}
-      borderColor="$gray60"
+      borderColor="$green20"
       onPress={onPress}>
-      <LinearGradient
-        height={18}
-        width={18}
-        borderRadius={99}
-        justifyContent="center"
-        alignItems="center"
-        colors={['#C0E58D', '#3BB554']}
-        start={[0, 0]}
-        end={[1, 1]}>
+      <XStack height={18} width={18} borderRadius={99} justifyContent="center" alignItems="center">
         {icon}
-      </LinearGradient>
+      </XStack>
 
-      <Text color={getTextSecondaryColor(isDark)}>{label}</Text>
+      <Text color="$green100">{label}</Text>
     </XStack>
   )
 }
 
 export const AssistantCard: FC<AssistantCardProps> = ({ topic }) => {
-  const isDark = useIsDark()
-  const navigation = useNavigation<NavigationProps>()
+  const { isDark } = useTheme()
+  const homeNavigation = useNavigation<HomeStackNavigationProp>()
+  const drawerNavigation = useNavigation<DrawerNavigationProp<any>>()
   const { assistant } = useAssistant(topic.assistantId)
 
   if (!assistant) {
@@ -67,19 +59,19 @@ export const AssistantCard: FC<AssistantCardProps> = ({ topic }) => {
 
   const actionMenu = [
     {
-      icon: <UserRoundPen size={13} />,
+      icon: <UserRoundPen size={13} color="$green100" />,
       label: 'edit',
-      onPress: () => navigation.navigate('AssistantDetailScreen', { assistantId: assistant.id, tab: 'prompt' })
+      onPress: () => homeNavigation.navigate('AssistantDetailScreen', { assistantId: assistant.id, tab: 'prompt' })
     },
     {
       icon: <UserChangeIcon />,
       label: 'change',
-      onPress: () => navigation.navigate('AssistantScreen')
+      onPress: () => drawerNavigation.navigate('Assistant', { screen: 'AssistantScreen' })
     },
     {
       icon: <ModelChangeIcon />,
       label: 'model',
-      onPress: () => navigation.navigate('AssistantDetailScreen', { assistantId: assistant.id, tab: 'model' })
+      onPress: () => homeNavigation.navigate('AssistantDetailScreen', { assistantId: assistant.id, tab: 'model' })
     }
   ]
 
@@ -117,7 +109,7 @@ export const AssistantCard: FC<AssistantCardProps> = ({ topic }) => {
           borderRadius={40}
           alignItems="center"
           justifyContent="center"
-          backgroundColor="$background"
+          backgroundColor="$uiCardBackground"
           paddingTop={60}
           paddingBottom={30}
           paddingHorizontal={21}>
@@ -140,10 +132,10 @@ export const AssistantCard: FC<AssistantCardProps> = ({ topic }) => {
                       group={group}
                       paddingHorizontal={12}
                       paddingVertical={5}
-                      backgroundColor={getGreenColor(isDark, 10)}
-                      color={getGreenColor(isDark, 100)}
+                      backgroundColor="$green10"
+                      color="$green100"
                       borderWidth={0.5}
-                      borderColor={getGreenColor(isDark, 20)}
+                      borderColor="$green20"
                     />
                   ))}
               </XStack>

@@ -1,10 +1,9 @@
 import React from 'react'
-import { StyleSheet, useColorScheme } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { Stack, View } from 'tamagui'
 
 import { useMessageBlocks } from '@/hooks/useMessageBlocks'
 import { Message, MessageBlockType } from '@/types/message'
-import { getGreenColor } from '@/utils/color'
 
 import MessageBlockRenderer from './blocks'
 
@@ -13,9 +12,6 @@ interface Props {
 }
 
 const MessageContent: React.FC<Props> = ({ message }) => {
-  const theme = useColorScheme()
-  const isDark = theme === 'dark'
-
   const isUser = message.role === 'user'
   const { processedBlocks } = useMessageBlocks(message.id)
 
@@ -27,7 +23,7 @@ const MessageContent: React.FC<Props> = ({ message }) => {
   )
 
   return (
-    <View style={isUser ? styles.userContainer : styles.assistantContainer}>
+    <View style={[isUser ? styles.userContainer : undefined, styles.container]}>
       {mediaBlocks.length > 0 && <MessageBlockRenderer blocks={mediaBlocks} />}
       {contentBlocks.length > 0 && (
         <Stack
@@ -36,8 +32,8 @@ const MessageContent: React.FC<Props> = ({ message }) => {
             isUser ? styles.userMessageContent : styles.assistantMessageContent,
             mediaBlocks.length > 0 && { marginTop: 8 }
           ]}
-          backgroundColor={isUser ? getGreenColor(isDark, 10) : '$colorTransparent'}
-          borderColor={isUser ? getGreenColor(isDark, 20) : '$colorTransparent'}
+          backgroundColor={isUser ? '$green10' : '$colorTransparent'}
+          borderColor={isUser ? '$green20' : '$colorTransparent'}
           borderWidth={1}>
           <MessageBlockRenderer blocks={contentBlocks} />
         </Stack>
@@ -47,14 +43,15 @@ const MessageContent: React.FC<Props> = ({ message }) => {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    maxWidth: '100%'
+  },
   userContainer: {
-    alignSelf: 'flex-end',
+    // alignSelf: 'flex-end',
     alignItems: 'flex-end'
   },
-  assistantContainer: {
-    alignSelf: 'flex-start',
-    alignItems: 'flex-start'
-  },
+
   contentWrapper: {
     borderTopRightRadius: 8,
     borderTopLeftRadius: 24,
@@ -67,7 +64,9 @@ const styles = StyleSheet.create({
   },
   assistantMessageContent: {
     backgroundColor: 'transparent',
-    paddingHorizontal: 10
+    paddingHorizontal: 0,
+    maxWidth: '100%',
+    width: '100%'
   }
 })
 

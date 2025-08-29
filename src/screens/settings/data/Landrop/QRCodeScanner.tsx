@@ -31,7 +31,7 @@ export function QRCodeScanner({ onQRCodeScanned }: QRCodeScannerProps) {
     if (permission === null || !permission?.granted) {
       getPermission()
     }
-  })
+  }, [permission, requestPermission, isRequestingPermission])
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
     try {
@@ -67,7 +67,7 @@ export function QRCodeScanner({ onQRCodeScanned }: QRCodeScannerProps) {
             {t('settings.data.landrop.scan_qr_code.permission_denied') ||
               'Camera permission not granted. Please enable it in your device settings to scan QR codes.'}
           </Text>
-          <Button onPress={() => requestPermission()} theme="red">
+          <Button onPress={() => requestPermission()}>
             {t('settings.data.landrop.scan_qr_code.grant_permission') || 'Grant Permission'}
           </Button>
           {/* 在iOS上，用户拒绝后不能直接再次弹窗请求，需要引导用户去设置 */}
@@ -84,7 +84,12 @@ export function QRCodeScanner({ onQRCodeScanned }: QRCodeScannerProps) {
         <Text>{t('settings.data.landrop.scan_qr_code.description')}</Text>
       </XStack>
       <CameraView
-        style={{ flex: 1 }}
+        style={{
+          width: '100%',
+          height: '100%'
+          // aspectRatio: 1,
+          // maxHeight: '70%'
+        }}
         facing="back"
         onBarcodeScanned={handleBarcodeScanned}
         barcodeScannerSettings={{

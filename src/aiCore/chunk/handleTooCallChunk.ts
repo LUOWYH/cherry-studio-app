@@ -1,20 +1,21 @@
-// /**
-//  * 工具调用 Chunk 处理模块
-//  *
-//  * 提供工具调用相关的处理API，每个交互使用一个新的实例
-//  */
+/**
+ * 工具调用 Chunk 处理模块
+ * TODO: Tool包含了providerTool和普通的Tool还有MCPTool,后面需要重构
+ * 提供工具调用相关的处理API，每个交互使用一个新的实例
+ */
 
-import { ToolCallUnion, ToolResultUnion, ToolSet } from '@cherrystudio/ai-core'
+import { ProviderMetadata, ToolSet, TypedToolCall, TypedToolResult } from '@cherrystudio/ai-core'
 
 import { loggerService } from '@/services/LoggerService'
 import { Chunk, ChunkType } from '@/types/chunk'
-import { MCPToolResponse } from '@/types/mcp'
-import { BaseTool } from '@/types/tool'
+import { MCPToolResponse, NormalToolResponse } from '@/types/mcp'
+import { BaseTool, MCPTool } from '@/types/tool'
 
 // import { Chunk, ChunkType } from '@/types/chunk'
 // import { MCPToolResponse } from '@/types/mcp'
 
 const logger = loggerService.withContext('ToolCallChunkHandler')
+
 /**
  * 工具调用处理器类
  */
@@ -42,13 +43,33 @@ export class ToolCallChunkHandler {
   //     this.onChunk = callback
   //   }
 
-  handleToolCallCreated(chunk: { type: 'tool-input-start' | 'tool-input-delta' | 'tool-input-end' }): void {
+  handleToolCallCreated(
+    chunk:
+      | {
+          type: 'tool-input-start'
+          id: string
+          toolName: string
+          providerMetadata?: ProviderMetadata
+          providerExecuted?: boolean
+        }
+      | {
+          type: 'tool-input-end'
+          id: string
+          providerMetadata?: ProviderMetadata
+        }
+      | {
+          type: 'tool-input-delta'
+          id: string
+          delta: string
+          providerMetadata?: ProviderMetadata
+        }
+  ): void {
     switch (chunk.type) {
       case 'tool-input-start': {
         // 能拿到说明是mcpTool
-        if (this.activeToolCalls.get(chunk.id)) return
+        // if (this.activeToolCalls.get(chunk.id)) return
 
-        const tool: BaseTool = {
+        const tool: BaseTool | MCPTool = {
           id: chunk.id,
           name: chunk.toolName,
           description: chunk.toolName,
@@ -59,6 +80,17 @@ export class ToolCallChunkHandler {
           toolName: chunk.toolName,
           args: '',
           tool
+        })
+        const toolResponse: MCPToolResponse | NormalToolResponse = {
+          id: chunk.id,
+          tool: tool,
+          arguments: {},
+          status: 'pending',
+          toolCallId: chunk.id
+        }
+        this.onChunk({
+          type: ChunkType.MCP_TOOL_PENDING,
+          responses: [toolResponse]
         })
         break
       }
@@ -84,23 +116,23 @@ export class ToolCallChunkHandler {
           return
         }
 
-        const toolResponse: ToolCallResponse = {
-          id: toolCall.toolCallId,
-          tool: toolCall.tool,
-          arguments: toolCall.args,
-          status: 'pending',
-          toolCallId: toolCall.toolCallId
-        }
-        logger.debug('toolResponse', toolResponse)
-        this.onChunk({
-          type: ChunkType.MCP_TOOL_PENDING,
-          responses: [toolResponse]
-        })
+        // const toolResponse: ToolCallResponse = {
+        //   id: toolCall.toolCallId,
+        //   tool: toolCall.tool,
+        //   arguments: toolCall.args,
+        //   status: 'pending',
+        //   toolCallId: toolCall.toolCallId
+        // }
+        // logger.debug('toolResponse', toolResponse)
+        // this.onChunk({
+        //   type: ChunkType.MCP_TOOL_PENDING,
+        //   responses: [toolResponse]
+        // })
         break
       }
     }
     // if (!toolCall) {
-    //   logger.warn(`🔧 [ToolCallChunkHandler] Tool call not found: ${chunk.id}`)
+    //   Logger.warn(`🔧 [ToolCallChunkHandler] Tool call not found: ${chunk.id}`)
     //   return
     // }
     // this.onChunk({
@@ -121,7 +153,7 @@ export class ToolCallChunkHandler {
   public handleToolCall(
     chunk: {
       type: 'tool-call'
-    } & ToolCallUnion<ToolSet>
+    } & TypedToolCall<ToolSet>
   ): void {
     const { toolCallId, toolName, input: args, providerExecuted } = chunk
 
@@ -130,7 +162,7 @@ export class ToolCallChunkHandler {
       return
     }
 
-    let tool: BaseTool
+    let tool: BaseTool | MCPTool
 
     // 根据 providerExecuted 标志区分处理逻辑
     if (providerExecuted) {
@@ -141,7 +173,7 @@ export class ToolCallChunkHandler {
         name: toolName,
         description: toolName,
         type: 'provider'
-      }
+      } as BaseTool
     } else if (toolName.startsWith('builtin_')) {
       // 如果是内置工具，沿用现有逻辑
       logger.info(`[ToolCallChunkHandler] Handling builtin tool: ${toolName}`)
@@ -150,7 +182,7 @@ export class ToolCallChunkHandler {
         name: toolName,
         description: toolName,
         type: 'builtin'
-      }
+      } as BaseTool
     } else {
       // 如果是客户端执行的 MCP 工具，沿用现有逻辑
       logger.info(`[ToolCallChunkHandler] Handling client-side MCP tool: ${toolName}`)
@@ -161,7 +193,7 @@ export class ToolCallChunkHandler {
         return
       }
 
-      tool = mcpTool
+      tool = mcpTool as MCPTool
     }
 
     // 记录活跃的工具调用
@@ -173,7 +205,7 @@ export class ToolCallChunkHandler {
     })
 
     // 创建 MCPToolResponse 格式
-    const toolResponse: MCPToolResponse = {
+    const toolResponse: MCPToolResponse | NormalToolResponse = {
       id: toolCallId,
       tool: tool,
       arguments: args,
@@ -196,7 +228,7 @@ export class ToolCallChunkHandler {
   public handleToolResult(
     chunk: {
       type: 'tool-result'
-    } & ToolResultUnion<ToolSet>
+    } & TypedToolResult<ToolSet>
   ): void {
     const { toolCallId, output, input } = chunk
 
@@ -214,15 +246,12 @@ export class ToolCallChunkHandler {
     }
 
     // 创建工具调用结果的 MCPToolResponse 格式
-    const toolResponse: MCPToolResponse = {
-      id: toolCallId,
+    const toolResponse: MCPToolResponse | NormalToolResponse = {
+      id: toolCallInfo.toolCallId,
       tool: toolCallInfo.tool,
       arguments: input,
       status: 'done',
-      response: {
-        data: output,
-        success: true
-      },
+      response: output,
       toolCallId: toolCallId
     }
     // 从活跃调用中移除（交互结束后整个实例会被丢弃）

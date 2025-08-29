@@ -19,8 +19,8 @@ import {
   isSupportedThinkingTokenGeminiModel,
   isSupportedThinkingTokenQwenModel
 } from '@/config/models/reasoning'
+import { useTheme as useCustomTheme } from '@/hooks/useTheme'
 import { Assistant, ReasoningEffortOptions } from '@/types/assistant'
-import { useIsDark } from '@/utils'
 
 export type ThinkingOption = ReasoningEffortOptions | 'off'
 
@@ -73,7 +73,7 @@ export const ReasoningSheet = forwardRef<BottomSheetModal, ReasoningSheetProps>(
   ({ assistant, updateAssistant }, ref) => {
     const { t } = useTranslation()
     const theme = useTheme()
-    const isDark = useIsDark()
+    const { isDark } = useCustomTheme()
     const model = assistant.model!
 
     const isGrokModel = isSupportedReasoningEffortGrokModel(model)
@@ -120,7 +120,7 @@ export const ReasoningSheet = forwardRef<BottomSheetModal, ReasoningSheetProps>(
           }
         })
       }
-    })
+    }, [assistant, currentReasoningEffort, supportedOptions, updateAssistant, model?.id])
 
     const onValueChange = (option?: ThinkingOption) => {
       const isEnabled = option !== undefined && option !== 'off'
@@ -169,7 +169,7 @@ export const ReasoningSheet = forwardRef<BottomSheetModal, ReasoningSheetProps>(
           backgroundColor: theme.color.val
         }}>
         <BottomSheetView>
-          <YStack gap={10} padding="20">
+          <YStack gap={10} paddingHorizontal={20} paddingBottom={20}>
             {sheetOptions.map(option => (
               <Button
                 key={option.value}

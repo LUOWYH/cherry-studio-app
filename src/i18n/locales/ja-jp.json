@@ -1,12 +1,6 @@
 {
   "translation": {
     "assistants": {
-      "create": {
-        "title": "アシスタントを作成する"
-      },
-      "edit": {
-        "title": "エディットアシスタント"
-      },
       "market": {
         "add.success": "{{assistant_name}}の追加に成功しました",
         "button.chat": "今すぐチャット",
@@ -46,6 +40,7 @@
       "title": "アシスタント",
       "title.create": "アシスタントを作成",
       "title.edit": "編集アシスタント",
+      "title.mine": "私のアシスタント",
       "title.recent": "最近のアシスタント"
     },
     "button": {
@@ -91,10 +86,13 @@
       "cherry_studio_description": "パワフルなAIプロダクション・アシスタント",
       "clear_all": "すべてクリア",
       "close": "閉じる",
+      "confirm": "確認",
+      "delete": "削除",
       "description": "説明",
       "enabled": "有効",
       "error_occurred": "エラーが発生しました",
       "file": "ファイル",
+      "generateImage": "画像を作成する",
       "language": "言語",
       "last_month": "先月",
       "last_week": "先週",
@@ -116,7 +114,42 @@
       "today": "今日",
       "tool": "ツール",
       "visit": "訪問",
+      "websearch": "ウェブ検索",
       "yesterday": "昨日"
+    },
+    "error": {
+      "backup": {
+        "file_format": "バックアップファイルの形式が正しくありません",
+        "file_invalid": "バックアップファイルが無効です。Cherry Studioでモバイル端末にエクスポートして取得する必要があります",
+        "title": "バックアップ失敗"
+      },
+      "chat": {
+        "response": "エラーが発生しました。APIキーが設定されていない場合は、設定 > モデルプロバイダーでキーを設定してください。"
+      },
+      "http": {
+        "400": "リクエストエラーが発生しました。リクエストパラメータが正しいか確認してください。モデル設定を変更した場合は、デフォルト設定にリセットしてください",
+        "401": "認証に失敗しました。APIキーが正しいか確認してください。",
+        "403": "アクセス禁止、具体的なエラーメッセージを翻訳して原因を確認するか、サービスプロバイダーに問い合わせて禁止理由をお尋ねください",
+        "404": "モデルが存在しないか、リクエストパスが間違っています",
+        "429": "リクエストレートが制限を超えました。しばらくしてからもう一度お試しください。",
+        "500": "サーバーエラーが発生しました。後ほどもう一度お試しください",
+        "502": "ゲートウェイエラー、しばらくしてからもう一度お試しください",
+        "503": "サービスは利用できません。後ほど再度お試しください",
+        "504": "ゲートウェイがタイムアウトしました。しばらくしてからもう一度お試しください"
+      },
+      "missing_user_message": "モデル応答を切り替えられません：元のユーザーメッセージは削除されました。このモデルの応答を得るには、新しいメッセージを送信してください",
+      "model": {
+        "exists": "モデルがすでに存在しています"
+      },
+      "no_api_key": "APIキーが設定されていません",
+      "pause_placeholder": "中断しました",
+      "provider_disabled": "モデルプロバイダーが有効になっていません",
+      "render": {
+        "description": "メッセージ内容のレンダリングに失敗しました。メッセージ内容の形式が正しいか確認してください。",
+        "title": "レンダリングエラー"
+      },
+      "unknown": "不明なエラー",
+      "user_message_not_found": "元のユーザーメッセージが見つかりません"
     },
     "errors": {
       "cannotOpenLink": "リンクを開けません: {{error}}",
@@ -145,6 +178,15 @@
         "title": "トピック"
       }
     },
+    "message": {
+      "delete_message": "メッセージを削除",
+      "delete_translation": "翻訳を削除",
+      "searching": "検索中...",
+      "translate_message": "メッセージを翻訳",
+      "websearch": {
+        "fetch_complete": "検索が {{count}} 回完了しました..."
+      }
+    },
     "models": {
       "no_models": "利用可能なモデルがありません",
       "type": {
@@ -168,13 +210,16 @@
       "noContent": "まだ{{type}}のコンテンツがありません。"
     },
     "provider": {
+      "302ai": "302.AI",
       "aihubmix": "AiHubMix",
       "alayanew": "Alaya NeW",
       "anthropic": "Anthropic",
+      "aws-bedrock": "AWS Bedrock",
       "azure-openai": "Azure OpenAI",
-      "baichuan": "Baichuan",
+      "baichuan": "百川",
       "baidu-cloud": "Baidu Cloud",
       "burncloud": "BurnCloud",
+      "cephalon": "Cephalon",
       "copilot": "GitHub Copilot",
       "dashscope": "Alibaba Cloud",
       "deepseek": "DeepSeek",
@@ -187,15 +232,17 @@
       "gpustack": "GPUStack",
       "grok": "Grok",
       "groq": "Groq",
-      "hunyuan": "Tencent Hunyuan",
+      "hunyuan": "腾讯混元",
       "hyperbolic": "Hyperbolic",
       "infini": "Infini",
       "jina": "Jina",
+      "lanyun": "LANYUN",
       "lmstudio": "LM Studio",
       "minimax": "MiniMax",
       "mistral": "Mistral",
       "modelscope": "ModelScope",
-      "moonshot": "Moonshot",
+      "moonshot": "月の暗面",
+      "new-api": "New API",
       "nvidia": "NVIDIA",
       "o3": "O3",
       "ocoolai": "ocoolAI",
@@ -203,19 +250,22 @@
       "openai": "OpenAI",
       "openrouter": "OpenRouter",
       "perplexity": "Perplexity",
-      "ppio": "PPIO",
-      "qiniu": "Qiniu",
+      "ph8": "PH8",
+      "poe": "Poe",
+      "ppio": "PPIO パイオウクラウド",
+      "qiniu": "七牛云 AI 推理",
       "qwenlm": "QwenLM",
       "silicon": "SiliconFlow",
       "stepfun": "StepFun",
       "tencent-cloud-ti": "Tencent Cloud TI",
       "together": "Together",
       "tokenflux": "TokenFlux",
+      "vertexai": "Vertex AI",
       "voyageai": "Voyage AI",
-      "xirang": "State Cloud Xirang",
-      "yi": "Yi",
-      "zhinao": "360AI",
-      "zhipu": "ZHIPU AI"
+      "xirang": "天翼クラウド 息壤",
+      "yi": "零一万物",
+      "zhinao": "360智脳",
+      "zhipu": "智譜AI"
     },
     "settings": {
       "about": {
@@ -248,11 +298,11 @@
           "name": "デフォルトアシスタント"
         },
         "empty": "まだアシスタントがありません...",
-        "title": "デフォルトアシスタント",
-        "topic_naming_assistant": {
-          "description": "新しいトピックを自動的に命名するときに使用されるアシスタント",
-          "name": "トピック命名アシスタント"
+        "quick_assistant": {
+          "description": "シンプルなタスクを行うためのアシスタント。トピック命名やキーワード抽出などに使用。",
+          "name": "クイックアシスタント"
         },
+        "title": "デフォルトアシスタント",
         "translate_assistant": {
           "description": "翻訳サービスに使用されるアシスタント",
           "name": "翻訳アシスタント"
@@ -261,17 +311,21 @@
       "assistant.show.icon": "モデルのアイコンを表示する",
       "data": {
         "app_data": "アプリデータ",
+        "app_data_location": "アプリケーションデータの場所",
         "app_knowledge": "ナレッジベースファイル",
         "app_knowledge.remove_all": "ファイルの削除",
         "app_logs": "アプリログ",
         "backup": "データバックアップ",
         "basic_title": "基本データ設定",
         "clear_cache": {
-          "button": "キャッシュをクリアする",
+          "button": "キャッシュをクリアする ({{cacheSize}})",
           "title": "キャッシュをクリアする"
         },
         "cloud_backup": "クラウドバックアップ設定",
         "data.title": "データディレクトリ",
+        "data_reset": {
+          "error": "データのリセットに失敗しました。もう一度試してください。問題が解決しない場合は、技術サポートまでお問い合わせください。"
+        },
         "landrop": {
           "filename": "ファイル名",
           "scan_qr_code": {
@@ -292,8 +346,11 @@
           },
           "title": "ランドロップ"
         },
+        "log_location": "ログファイルの場所",
         "recovery": "データ復元",
         "reset": "データリセット",
+        "reset_success": "データリセットが成功しました！アプリケーションは初期状態に復元されました。",
+        "reset_warning": "すべてのデータをリセットしますか？これにより、すべての会話、メッセージ、およびユーザーが作成したコンテンツが削除されます。この操作は元に戻せません。",
         "restore": {
           "error": "エラーを復元",
           "error_message": "復元処理中にエラーが発生しました。ファイルを確認して、もう一度やり直してください。",
@@ -344,6 +401,12 @@
         "token_placeholder": "Joplin認証トークン",
         "url": "JoplinウェブクリッパーサービスURL",
         "url_placeholder": "http://127.0.0.1:41184/"
+      },
+      "mcp": {
+        "errors": {
+          "32000": "MCPサーバーエラー",
+          "toolNotFound": "ツール '{{name}}' が見つかりません"
+        }
       },
       "modelAndService": "AIモデル＆サービス",
       "models": {
@@ -402,6 +465,11 @@
         "default_vault_placeholder": "デフォルトのObsidianボールトを選択してください",
         "title": "Obsidian設定"
       },
+      "personal": {
+        "name": "ユーザー名",
+        "namePlaceholder": "ユーザー名を入力してください",
+        "title": "個人設定"
+      },
       "provider": {
         "add.name": "プロバイダー名",
         "add.name.placeholder": "例：OpenAI",
@@ -425,6 +493,12 @@
           "free_bills": "無料請求",
           "login": "ログイン",
           "title": "{{provider}} サービス"
+        },
+        "check_failed": {
+          "api_key_empty": "APIキーは空にできません",
+          "model_api_key_empty": "モデルとAPIキーは空にできません",
+          "model_empty": "モデルを空にすることはできません",
+          "title": "モデルチェック失敗"
         },
         "delete.content": "このプロバイダーを削除してもよろしいですか？",
         "delete.title": "プロバイダーの削除",

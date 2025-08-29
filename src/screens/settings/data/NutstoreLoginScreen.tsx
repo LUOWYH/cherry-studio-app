@@ -1,9 +1,8 @@
-import { useNavigation } from '@react-navigation/native'
 import { ChevronRight, HardDriveDownload, HardDriveUpload, LogOut, RefreshCcw, UserPlus } from '@tamagui/lucide-icons'
 import { useState } from 'react'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, Text, useTheme, XStack, YStack } from 'tamagui'
+import { ScrollView, Text, XStack, YStack } from 'tamagui'
 
 import { SettingContainer, SettingGroup, SettingGroupTitle, SettingRow } from '@/components/settings'
 import { HeaderBar } from '@/components/settings/HeaderBar'
@@ -11,13 +10,12 @@ import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 
 export default function NutstoreLoginScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false) // State to track login status
-  const theme = useTheme()
-  const navigation = useNavigation()
+
   const { t } = useTranslation()
 
   return (
-    <SafeAreaContainer style={{ flex: 1, backgroundColor: theme.background.val }}>
-      <HeaderBar title={t('settings.nutstore.nutstore')} onBackPress={() => navigation.goBack()} />
+    <SafeAreaContainer style={{ flex: 1 }}>
+      <HeaderBar title={t('settings.nutstore.nutstore')} />
       <ScrollView flex={1} backgroundColor="$background">
         <SettingContainer>
           {isLoggedIn ? (

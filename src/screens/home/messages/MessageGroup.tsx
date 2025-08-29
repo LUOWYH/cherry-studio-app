@@ -1,23 +1,21 @@
-import BottomSheet from '@gorhom/bottom-sheet'
 import { FC } from 'react'
 import React from 'react'
 import { View } from 'tamagui'
 
 import { Assistant } from '@/types/assistant'
-import { GroupedMessage } from '@/types/message'
+import { AssistantMessageStatus, GroupedMessage } from '@/types/message'
 
 import MessageItem from './Message'
 import MessageFooter from './MessageFooter'
 import MessageHeader from './MessageHeader'
-import MultiModalTab from './MultiModalTab'
+import MultiModelTab from './MultiModelTab'
+
 interface MessageGroupProps {
   assistant: Assistant
   item: [string, GroupedMessage[]]
-  bottomSheetRef?: React.RefObject<BottomSheet>
-  setIsBottomSheetOpen?: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const MessageGroup: FC<MessageGroupProps> = ({ assistant, item, bottomSheetRef, setIsBottomSheetOpen }) => {
+const MessageGroup: FC<MessageGroupProps> = ({ assistant, item }) => {
   const [key, messagesInGroup] = item
 
   const renderUserMessage = () => {
@@ -30,13 +28,9 @@ const MessageGroup: FC<MessageGroupProps> = ({ assistant, item, bottomSheetRef, 
         <View gap={10}>
           <MessageHeader assistant={assistant} message={messagesInGroup[0]} />
           <MessageItem message={messagesInGroup[0]} />
-          {bottomSheetRef && setIsBottomSheetOpen && (
-            <MessageFooter
-              assistant={assistant}
-              message={messagesInGroup[0]}
-              bottomSheetRef={bottomSheetRef}
-              setIsBottomSheetOpen={setIsBottomSheetOpen}
-            />
+          {/* 输出过程中不显示footer */}
+          {messagesInGroup[0].status !== AssistantMessageStatus.PROCESSING && (
+            <MessageFooter assistant={assistant} message={messagesInGroup[0]} />
           )}
         </View>
       )
@@ -45,7 +39,7 @@ const MessageGroup: FC<MessageGroupProps> = ({ assistant, item, bottomSheetRef, 
     return (
       <View gap={10}>
         <MessageHeader assistant={assistant} message={messagesInGroup[0]} />
-        <MultiModalTab assistant={assistant} messages={messagesInGroup} />
+        <MultiModelTab assistant={assistant} messages={messagesInGroup} />
       </View>
     )
   }

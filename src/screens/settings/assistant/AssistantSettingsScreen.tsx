@@ -1,23 +1,25 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useNavigation } from '@react-navigation/native'
-import { ChevronRight, Settings2 } from '@tamagui/lucide-icons'
+import { ChevronDown, Languages, MessageSquareMore, Rocket, Settings2 } from '@tamagui/lucide-icons'
 import React, { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
 import { Button, Text, XStack, YStack } from 'tamagui'
+import { Image } from 'tamagui'
 
 import { SettingContainer, SettingHelpText } from '@/components/settings'
 import { HeaderBar } from '@/components/settings/HeaderBar'
 import ModelSheet from '@/components/sheets/ModelSheet'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { useAssistant } from '@/hooks/useAssistant'
+import { useTheme } from '@/hooks/useTheme'
 import { Assistant, Model } from '@/types/assistant'
 import { NavigationProps } from '@/types/naviagate'
-import { useIsDark } from '@/utils'
+import { getModelOrProviderIcon } from '@/utils/icons'
 
 function ModelPicker({ assistant, onPress }: { assistant: Assistant; onPress: () => void }) {
   const { t } = useTranslation()
-  const isDark = useIsDark()
+  const { isDark } = useTheme()
   const model = assistant?.model
 
   return (
@@ -28,16 +30,25 @@ function ModelPicker({ assistant, onPress }: { assistant: Assistant; onPress: ()
       paddingHorizontal={16}
       paddingVertical={15}
       onPress={onPress}
-      iconAfter={<ChevronRight size={16} />}
-      backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}>
+      iconAfter={<ChevronDown size={16} />}
+      backgroundColor="$uiCardBackground">
       <XStack flex={1} alignItems="center" overflow="hidden" justifyContent="space-between">
         {model ? (
-          <XStack flex={1} justifyContent="space-between">
-            <Text flexShrink={1} numberOfLines={1} ellipsizeMode="tail" fontWeight="bold">
-              {t(`provider.${model.provider}`)}
-            </Text>
-            <Text flexShrink={0} numberOfLines={1} maxWidth="60%" ellipsizeMode="tail" fontSize={12}>
+          <XStack flex={1} alignItems="center" gap={8}>
+            <Image
+              borderRadius={99}
+              width={18}
+              height={18}
+              source={getModelOrProviderIcon(model.id, model.provider, isDark)}
+            />
+            <Text flexShrink={0} numberOfLines={1} maxWidth="60%" ellipsizeMode="tail" fontSize={14}>
               {model.name}
+            </Text>
+            <Text opacity={0.45} fontWeight="bold" fontSize={14}>
+              |
+            </Text>
+            <Text opacity={0.45} flexShrink={1} numberOfLines={1} ellipsizeMode="tail" fontWeight="bold" fontSize={14}>
+              {t(`provider.${model.provider}`)}
             </Text>
           </XStack>
         ) : (
@@ -56,6 +67,7 @@ interface AssistantSettingItemProps {
   descriptionKey: string
   assistant: Assistant
   updateAssistant: (assistant: Assistant) => Promise<void>
+  icon?: React.ReactElement
 }
 
 function AssistantSettingItem({
@@ -63,7 +75,8 @@ function AssistantSettingItem({
   titleKey,
   descriptionKey,
   assistant,
-  updateAssistant
+  updateAssistant,
+  icon
 }: AssistantSettingItemProps) {
   const { t } = useTranslation()
   const navigation = useNavigation<NavigationProps>()
@@ -78,7 +91,10 @@ function AssistantSettingItem({
     <>
       <YStack gap={8}>
         <XStack justifyContent="space-between" height={20}>
-          <Text>{t(titleKey)}</Text>
+          <XStack alignItems="center" gap={8}>
+            {icon}
+            <Text>{t(titleKey)}</Text>
+          </XStack>
           <Button
             size={14}
             icon={<Settings2 size={14} color="$textLink" />}
@@ -104,13 +120,12 @@ function AssistantSettingItem({
 
 export default function AssistantSettingsScreen() {
   const { t } = useTranslation()
-  const navigation = useNavigation<NavigationProps>()
 
   const { assistant: defaultAssistant, updateAssistant: updateDefaultAssistant } = useAssistant('default')
-  const { assistant: topicNamingAssistant, updateAssistant: updateTopicNamingAssistant } = useAssistant('topic_naming')
+  const { assistant: quickAssistant, updateAssistant: updateQuickAssistant } = useAssistant('quick')
   const { assistant: translateAssistant, updateAssistant: updateTranslateAssistant } = useAssistant('translate')
 
-  const isLoading = !defaultAssistant || !topicNamingAssistant || !translateAssistant
+  const isLoading = !defaultAssistant || !quickAssistant || !translateAssistant
 
   if (isLoading) {
     return (
@@ -126,27 +141,30 @@ export default function AssistantSettingsScreen() {
       titleKey: 'settings.assistant.default_assistant.name',
       descriptionKey: 'settings.assistant.default_assistant.description',
       assistant: defaultAssistant,
-      updateAssistant: updateDefaultAssistant
+      updateAssistant: updateDefaultAssistant,
+      icon: <MessageSquareMore size={16} color="$textSecondary" />
     },
     {
-      id: 'topic_naming',
-      titleKey: 'settings.assistant.topic_naming_assistant.name',
-      descriptionKey: 'settings.assistant.topic_naming_assistant.description',
-      assistant: topicNamingAssistant,
-      updateAssistant: updateTopicNamingAssistant
+      id: 'quick',
+      titleKey: 'settings.assistant.quick_assistant.name',
+      descriptionKey: 'settings.assistant.quick_assistant.description',
+      assistant: quickAssistant,
+      updateAssistant: updateQuickAssistant,
+      icon: <Rocket size={16} color="$textSecondary" />
     },
     {
       id: 'translate',
       titleKey: 'settings.assistant.translate_assistant.name',
       descriptionKey: 'settings.assistant.translate_assistant.description',
       assistant: translateAssistant,
-      updateAssistant: updateTranslateAssistant
+      updateAssistant: updateTranslateAssistant,
+      icon: <Languages size={16} color="$textSecondary" />
     }
   ]
 
   return (
     <SafeAreaContainer>
-      <HeaderBar title={t('settings.assistant.title')} onBackPress={() => navigation.goBack()} />
+      <HeaderBar title={t('settings.assistant.title')} />
       <SettingContainer>
         {assistantItems.map(item => (
           <AssistantSettingItem
@@ -156,6 +174,7 @@ export default function AssistantSettingsScreen() {
             descriptionKey={item.descriptionKey}
             assistant={item.assistant}
             updateAssistant={item.updateAssistant}
+            icon={item.icon}
           />
         ))}
       </SettingContainer>

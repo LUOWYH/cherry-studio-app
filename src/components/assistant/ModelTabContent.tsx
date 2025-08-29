@@ -3,17 +3,16 @@ import { ChevronRight } from '@tamagui/lucide-icons'
 import { MotiView } from 'moti'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Text, XStack } from 'tamagui'
+import { Button, Input, Stack, Text, XStack } from 'tamagui'
 
 import { SettingGroup, SettingRow } from '@/components/settings'
 import { isReasoningModel } from '@/config/models/reasoning'
 import { Assistant, AssistantSettings, Model } from '@/types/assistant'
-import { useIsDark } from '@/utils'
 
 import ModelSheet from '../sheets/ModelSheet'
+import { ReasoningSheet } from '../sheets/ReasoningSheet'
 import { CustomSlider } from '../ui/CustomSlider'
 import { CustomSwitch } from '../ui/Switch'
-import { ReasoningSelect } from './ReasoningSelect'
 
 interface ModelTabContentProps {
   assistant: Assistant
@@ -22,10 +21,12 @@ interface ModelTabContentProps {
 
 export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentProps) {
   const { t } = useTranslation()
-  const isDark = useIsDark()
-
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+  const modelSheetRef = useRef<BottomSheetModal>(null)
+  const reasoningSheetRef = useRef<BottomSheetModal>(null)
   const [model, setModel] = useState<Model[]>(assistant?.model ? [assistant.model] : [])
+  const [maxTokensInput, setMaxTokensInput] = useState<string>(
+    assistant.settings?.maxTokens ? assistant.settings.maxTokens.toString() : ''
+  )
   const isReasoning = isReasoningModel(assistant?.model)
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
       ...assistant,
       model: model[0]
     })
-  })
+  }, [model])
+
+  useEffect(() => {
+    setMaxTokensInput(assistant.settings?.maxTokens ? assistant.settings.maxTokens.toString() : '')
+  }, [assistant.settings?.maxTokens])
 
   const handleSettingsChange = (key: keyof AssistantSettings, value: any) => {
     updateAssistant({
@@ -45,21 +50,32 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
     })
   }
 
-  const handleMaxTokensChange = (value: string) => {
-    if (value.trim() === '') {
+  const handleMaxTokensInputChange = (value: string) => {
+    setMaxTokensInput(value)
+  }
+
+  const handleMaxTokensBlur = () => {
+    if (maxTokensInput.trim() === '') {
       handleSettingsChange('maxTokens', undefined)
       return
     }
 
-    const numValue = parseInt(value, 10)
+    const numValue = parseInt(maxTokensInput, 10)
 
     if (!isNaN(numValue) && numValue > 0) {
       handleSettingsChange('maxTokens', numValue)
+    } else {
+      // Reset to previous valid value if invalid
+      setMaxTokensInput(settings.maxTokens ? settings.maxTokens.toString() : '')
     }
   }
 
-  const handlePress = () => {
-    bottomSheetModalRef.current?.present()
+  const handleModelPress = () => {
+    modelSheetRef.current?.present()
+  }
+
+  const handleReasoningPress = () => {
+    reasoningSheetRef.current?.present()
   }
 
   const settings = assistant.settings || {}
@@ -76,35 +92,32 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
       transition={{
         type: 'timing'
       }}>
+      <Button
+        chromeless
+        height={30}
+        paddingHorizontal={16}
+        paddingVertical={23}
+        iconAfter={<ChevronRight size={16} />}
+        backgroundColor="$uiCardBackground"
+        onPress={handleModelPress}>
+        <XStack height={20} flex={1} alignItems="center" overflow="hidden" justifyContent="space-between">
+          {model.length > 0 ? (
+            <>
+              <Text lineHeight={17} flexShrink={1} numberOfLines={1} ellipsizeMode="tail">
+                {t(`provider.${model[0].provider}`)}
+              </Text>
+              <Text lineHeight={20} fontSize={12} flexShrink={0} numberOfLines={1} maxWidth="60%" ellipsizeMode="tail">
+                {model[0].name}
+              </Text>
+            </>
+          ) : (
+            <Text lineHeight={20} flex={1} numberOfLines={1} ellipsizeMode="tail">
+              {t('settings.models.empty')}
+            </Text>
+          )}
+        </XStack>
+      </Button>
       <SettingGroup>
-        <SettingRow>
-          <Button
-            chromeless
-            width="100%"
-            height="100%"
-            paddingHorizontal={16}
-            paddingVertical={15}
-            iconAfter={<ChevronRight size={16} />}
-            backgroundColor={isDark ? '$uiCardDark' : '$uiCardLight'}
-            onPress={handlePress}>
-            <XStack flex={1} alignItems="center" overflow="hidden" justifyContent="space-between">
-              {model.length > 0 ? (
-                <>
-                  <Text flexShrink={1} numberOfLines={1} ellipsizeMode="tail">
-                    {t(`provider.${model[0].provider}`)}
-                  </Text>
-                  <Text flexShrink={0} numberOfLines={1} maxWidth="60%" ellipsizeMode="tail">
-                    {model[0].name}
-                  </Text>
-                </>
-              ) : (
-                <Text flex={1} numberOfLines={1} ellipsizeMode="tail">
-                  {t('settings.models.empty')}
-                </Text>
-              )}
-            </XStack>
-          </Button>
-        </SettingRow>
         <SettingRow>
           <CustomSlider
             label={t('assistants.settings.temperature')}
@@ -137,7 +150,7 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
         <SettingRow>
           <Text>{t('assistants.settings.stream_output')}</Text>
           <CustomSwitch
-            checked={settings.streamOutput ?? false}
+            checked={settings.streamOutput ?? true}
             onCheckedChange={checked => handleSettingsChange('streamOutput', checked)}
           />
         </SettingRow>
@@ -155,20 +168,50 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
               minWidth={80}
               height={25}
               fontSize={12}
-              value={settings.maxTokens ? settings.maxTokens.toString() : ''}
-              onChangeText={handleMaxTokensChange}
+              lineHeight={12 * 1.2}
+              value={maxTokensInput}
+              onChangeText={handleMaxTokensInputChange}
+              onBlur={handleMaxTokensBlur}
               keyboardType="numeric"
             />
           </SettingRow>
         )}
         {isReasoning && (
-          <SettingRow>
-            <Text>{t('assistants.settings.reasoning')}</Text>
-            <ReasoningSelect assistant={assistant} updateAssistant={updateAssistant} />
-          </SettingRow>
+          // <SettingRow>
+          //   <Text>{t('assistants.settings.reasoning')}</Text>
+          //   <ReasoningSelect assistant={assistant} updateAssistant={updateAssistant} />
+          // </SettingRow>
+          <Button
+            backgroundColor="$colorTransparent"
+            borderWidth={0}
+            iconAfter={ChevronRight}
+            onPress={handleReasoningPress}
+            justifyContent="space-between"
+            paddingVertical={12}
+            paddingLeft={16}
+            paddingRight={20}>
+            <Text flex={1}>{t('assistants.settings.reasoning')}</Text>
+
+            <Stack justifyContent="flex-end">
+              <Text
+                fontSize={12}
+                backgroundColor="$green10"
+                borderColor="$green20"
+                color="$green100"
+                borderWidth={0.5}
+                paddingVertical={2}
+                paddingHorizontal={8}
+                borderRadius={8}>
+                {t(`assistants.settings.reasoning.${assistant?.settings?.reasoning_effort || 'off'}`)}
+              </Text>
+            </Stack>
+          </Button>
         )}
       </SettingGroup>
-      <ModelSheet ref={bottomSheetModalRef} mentions={model} setMentions={setModel} multiple={false} />
+      <ModelSheet ref={modelSheetRef} mentions={model} setMentions={setModel} multiple={false} />
+      {assistant.model && (
+        <ReasoningSheet ref={reasoningSheetRef} assistant={assistant} updateAssistant={updateAssistant} />
+      )}
     </MotiView>
   )
 }

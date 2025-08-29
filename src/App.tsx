@@ -6,12 +6,13 @@ import { NavigationContainer, ThemeProvider } from '@react-navigation/native'
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'
 import { useFonts } from 'expo-font'
+import * as Localization from 'expo-localization'
+import * as NavigationBar from 'expo-navigation-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { SQLiteProvider } from 'expo-sqlite'
-import { StatusBar } from 'expo-status-bar'
-import { Suspense, useEffect } from 'react'
-import React from 'react'
-import { ActivityIndicator } from 'react-native'
+import * as StatusBar from 'expo-status-bar'
+import React, { Suspense, useEffect } from 'react'
+import { ActivityIndicator, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Provider, useSelector } from 'react-redux'
@@ -32,9 +33,10 @@ import { upsertProviders } from '../db/queries/providers.queries'
 import { upsertWebSearchProviders } from '../db/queries/websearchProviders.queries'
 import migrations from '../drizzle/migrations'
 import tamaguiConfig from '../tamagui.config'
-import { getBuiltInAssistants, getSystemAssistants } from './config/assistants'
-import { getSystemProviders } from './config/providers'
-import AppNavigator from './navigators/AppNavigator'
+import { getSystemAssistants } from './config/assistants'
+import { SYSTEM_PROVIDERS } from './config/providers'
+import MainStackNavigator from './navigators/MainStackNavigator'
+import { storage } from './utils'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -58,14 +60,14 @@ function DatabaseInitializer() {
       try {
         logger.info('First launch, initializing app data...')
         const systemAssistants = getSystemAssistants()
-        const builtInAssistants = getBuiltInAssistants()
-        await upsertAssistants([...systemAssistants, ...builtInAssistants])
-        const providers = getSystemProviders()
-        await upsertProviders(providers)
+        // const builtInAssistants = getBuiltInAssistants()
+        await upsertAssistants([...systemAssistants])
+        await upsertProviders(SYSTEM_PROVIDERS)
         const websearchProviders = getWebSearchProviders()
         await upsertWebSearchProviders(websearchProviders)
         const dataBackupProviders = getDataBackupProviders()
         await upsertDataBackupProviders(dataBackupProviders)
+        storage.set('language', Localization.getLocales()[0]?.languageTag)
         dispatch(setInitialized(true))
         logger.info('App data initialized successfully.')
       } catch (e) {
@@ -83,11 +85,11 @@ function DatabaseInitializer() {
     }
 
     handleMigrations()
-  })
+  }, [success, error, initialized, dispatch, loaded])
 
   useEffect(() => {
     SplashScreen.hideAsync()
-  })
+  }, [])
 
   return null
 }
@@ -95,6 +97,15 @@ function DatabaseInitializer() {
 // 主题和导航组件
 function ThemedApp() {
   const { activeTheme, reactNavigationTheme } = useTheme()
+
+  const backgroundColor = activeTheme === 'dark' ? '#121213ff' : '#f7f7f7ff'
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setBackgroundColorAsync(backgroundColor)
+      StatusBar.setStatusBarStyle('auto')
+    }
+  }, [backgroundColor])
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={activeTheme}>
@@ -104,8 +115,7 @@ function ThemedApp() {
             <ThemeProvider value={reactNavigationTheme}>
               <BottomSheetModalProvider>
                 <DatabaseInitializer />
-                <AppNavigator />
-                <StatusBar style="auto" />
+                <MainStackNavigator />
               </BottomSheetModalProvider>
             </ThemeProvider>
           </NavigationContainer>

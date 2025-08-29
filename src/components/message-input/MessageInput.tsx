@@ -5,27 +5,28 @@ import { AnimatePresence, MotiView } from 'moti'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard } from 'react-native'
-import { styled, TextArea, View, XStack, YStack } from 'tamagui'
+import { styled, TextArea, XStack, YStack } from 'tamagui'
 
 import { isReasoningModel } from '@/config/models/reasoning'
 import { useAssistant } from '@/hooks/useAssistant'
+import { useMessageOperations, useTopicLoading } from '@/hooks/useMessageOperation'
+import { useTheme } from '@/hooks/useTheme'
 import { loggerService } from '@/services/LoggerService'
 import { sendMessage as _sendMessage } from '@/services/MessagesService'
 import { getUserMessage } from '@/services/MessagesService'
+import { useAppDispatch } from '@/store'
 import { Model, Topic } from '@/types/assistant'
 import { FileType } from '@/types/file'
 import { MessageInputBaseParams } from '@/types/message'
-import { useIsDark } from '@/utils'
-import { getGreenColor } from '@/utils/color'
 import { haptic } from '@/utils/haptic'
 
-import { AddAssetsButton } from './AddAssetsButton'
 import FilePreview from './FilePreview'
 import { MentionButton } from './MentionButton'
+import { PauseButton } from './PauseButton'
 import { SendButton } from './SendButton'
 import { ThinkButton } from './ThinkButton'
-import { VoiceButton } from './VoiceButton'
-import { WebsearchButton } from './WebsearchButton'
+import { ToolButton } from './ToolButton'
+import ToolPreview from './ToolPreview'
 const logger = loggerService.withContext('Message Input')
 
 interface MessageInputProps {
@@ -34,12 +35,15 @@ interface MessageInputProps {
 
 export const MessageInput: React.FC<MessageInputProps> = ({ topic }) => {
   const { t } = useTranslation()
-  const isDark = useIsDark()
+  const { isDark } = useTheme()
+  const dispatch = useAppDispatch()
   const { assistant, isLoading, updateAssistant } = useAssistant(topic.assistantId)
 
   const [text, setText] = useState('')
   const [files, setFiles] = useState<FileType[]>([])
   const [mentions, setMentions] = useState<Model[]>([])
+  const isTopicLoading = useTopicLoading(topic)
+  const { pauseMessages } = useMessageOperations(topic)
 
   const isReasoning = isReasoningModel(assistant?.model)
 
@@ -68,9 +72,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({ topic }) => {
         message.mentions = mentions
       }
 
-      await _sendMessage(message, blocks, assistant, topic.id)
+      await _sendMessage(message, blocks, assistant, topic.id, dispatch)
     } catch (error) {
       logger.error('Error sending message:', error)
+    }
+  }
+
+  const onPause = async () => {
+    haptic(ImpactFeedbackStyle.Medium)
+
+    try {
+      await pauseMessages()
+    } catch (error) {
+      logger.error('Error pause message:', error)
     }
   }
 
@@ -78,52 +92,69 @@ export const MessageInput: React.FC<MessageInputProps> = ({ topic }) => {
     return null
   }
 
-  const showBackgroundColor = (assistant.webSearchProviderId || assistant.enableWebSearch) && isReasoning
-
   return (
     <LinearGradient
       padding={1}
       borderRadius={20}
-      colors={isDark ? ['#acf3a633', '#acf3a6ff', '#acf3a633'] : ['#8de59e4d', '#81df94ff', '#8de59e4d']}
+      colors={
+        text
+          ? isDark
+            ? ['#acf3a633', '#acf3a6ff', '#acf3a633']
+            : ['#8de59e4d', '#81df94ff', '#8de59e4d']
+          : isDark
+            ? ['#acf3a633', '#acf3a633']
+            : ['#8de59e4d', '#8de59e4d']
+      }
       start={[0, 0]}
       end={[1, 1]}>
       <InputContent>
-        <View>
-          <YStack gap={10}>
-            {files.length > 0 && <FilePreview files={files} setFiles={setFiles} />}
-            {/* message */}
-            <XStack>
-              <TextArea
-                placeholder={t('inputs.placeholder')}
-                borderWidth={0}
-                backgroundColor="$colorTransparent"
-                flex={1}
-                value={text}
-                onChangeText={setText}
-                lineHeight={22}
-                color={isDark ? '$textSecondaryDark' : '$textSecondaryLight'}
-              />
+        <YStack gap={10}>
+          {files.length > 0 && <FilePreview files={files} setFiles={setFiles} />}
+          {/* message */}
+          <XStack>
+            <TextArea
+              placeholder={t('inputs.placeholder')}
+              borderWidth={0}
+              backgroundColor="$colorTransparent"
+              p={0}
+              flex={1}
+              value={text}
+              onChangeText={setText}
+              lineHeight={22}
+              color="$textSecondaryLight"
+            />
+          </XStack>
+          {/* button */}
+          <XStack justifyContent="space-between" alignItems="center" minHeight={30}>
+            <XStack gap={10} alignItems="center">
+              <ToolButton files={files} setFiles={setFiles} assistant={assistant} updateAssistant={updateAssistant} />
+              {isReasoning && <ThinkButton assistant={assistant} updateAssistant={updateAssistant} />}
+              <MentionButton mentions={mentions} setMentions={setMentions} />
+              <ToolPreview assistant={assistant} updateAssistant={updateAssistant} />
             </XStack>
-            {/* button */}
-            <XStack justifyContent="space-between" alignItems="center">
-              <XStack gap={10} alignItems="center">
-                <AddAssetsButton files={files} setFiles={setFiles} />
-                <XStack
-                  gap={14}
-                  paddingHorizontal={showBackgroundColor ? 12 : 0}
-                  paddingVertical={10}
-                  backgroundColor={showBackgroundColor ? getGreenColor(isDark, 20) : undefined}
-                  borderRadius={48}>
-                  {(assistant.webSearchProviderId || assistant.enableWebSearch) && (
-                    <WebsearchButton assistant={assistant} updateAssistant={updateAssistant} />
-                  )}
-                  {isReasoning && <ThinkButton assistant={assistant} updateAssistant={updateAssistant} />}
-                </XStack>
-              </XStack>
-              <XStack gap={10} alignItems="center">
-                <MentionButton mentions={mentions} setMentions={setMentions} />
-                <AnimatePresence exitBeforeEnter>
-                  {text ? (
+            <XStack gap={10} alignItems="center">
+              <AnimatePresence exitBeforeEnter>
+                {text && !isTopicLoading && (
+                  <MotiView
+                    key="send-button"
+                    from={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{ type: 'timing', duration: 200 }}>
+                    <SendButton onSend={sendMessage} />
+                  </MotiView>
+                )}
+                {isTopicLoading && (
+                  <MotiView
+                    key="pause-button"
+                    from={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{ type: 'timing', duration: 200 }}>
+                    <PauseButton onPause={onPause} />
+                  </MotiView>
+                )}
+                {/*{text ? (
                     <MotiView
                       key="send-button"
                       from={{ opacity: 0, scale: 0.5 }}
@@ -141,12 +172,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ topic }) => {
                       transition={{ type: 'timing', duration: 100 }}>
                       <VoiceButton />
                     </MotiView>
-                  )}
-                </AnimatePresence>
-              </XStack>
+                  )}*/}
+              </AnimatePresence>
             </XStack>
-          </YStack>
-        </View>
+          </XStack>
+        </YStack>
       </InputContent>
     </LinearGradient>
   )
@@ -156,5 +186,5 @@ const InputContent = styled(YStack, {
   paddingHorizontal: 16,
   paddingVertical: 12,
   borderRadius: 20,
-  backgroundColor: '$background'
+  backgroundColor: '$backgroundPrimary'
 })

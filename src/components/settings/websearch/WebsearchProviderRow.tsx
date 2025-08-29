@@ -1,16 +1,15 @@
 import { useNavigation } from '@react-navigation/native'
+import type { StackNavigationProp } from '@react-navigation/stack'
 import { ChevronRight } from '@tamagui/lucide-icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Text, XStack } from 'tamagui'
 
 import { WebsearchProviderIcon } from '@/components/ui/WebsearchIcon'
-import { NavigationProps } from '@/types/naviagate'
+import { WebSearchStackParamList } from '@/navigators/settings/WebSearchStackNavigator'
 import { WebSearchProvider } from '@/types/websearch'
-import { useIsDark } from '@/utils'
-import { getGreenColor } from '@/utils/color'
 
-import { SettingRow } from '..'
+import { PressableSettingRow } from '..'
 interface WebsearchProviderRowProps {
   provider: WebSearchProvider
   // google, bing or baidu not need expended
@@ -19,8 +18,7 @@ interface WebsearchProviderRowProps {
 
 export const WebsearchProviderRow = ({ provider, need_config }: WebsearchProviderRowProps) => {
   const { t } = useTranslation()
-  const isDark = useIsDark()
-  const navigation = useNavigation<NavigationProps>()
+  const navigation = useNavigation<StackNavigationProp<WebSearchStackParamList>>()
 
   const onPress = () => {
     if (!need_config) return
@@ -28,7 +26,7 @@ export const WebsearchProviderRow = ({ provider, need_config }: WebsearchProvide
   }
 
   return (
-    <SettingRow onPress={onPress}>
+    <PressableSettingRow onPress={onPress}>
       <XStack gap={5}>
         <WebsearchProviderIcon provider={provider} />
         <Text>{provider.name}</Text>
@@ -38,9 +36,9 @@ export const WebsearchProviderRow = ({ provider, need_config }: WebsearchProvide
           <Text
             borderRadius={8}
             borderWidth={0.5}
-            backgroundColor={getGreenColor(isDark, 10)}
-            borderColor={getGreenColor(isDark, 20)}
-            color={getGreenColor(isDark, 100)}
+            backgroundColor="$green10"
+            borderColor="$green20"
+            color="$green100"
             paddingVertical={2}
             paddingHorizontal={8}
             justifyContent="center"
@@ -51,6 +49,6 @@ export const WebsearchProviderRow = ({ provider, need_config }: WebsearchProvide
         )}
         {need_config && <ChevronRight />}
       </XStack>
-    </SettingRow>
+    </PressableSettingRow>
   )
 }
