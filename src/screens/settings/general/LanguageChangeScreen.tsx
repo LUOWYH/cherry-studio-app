@@ -1,20 +1,16 @@
 import { useNavigation } from '@react-navigation/native'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Text, useTheme, XStack, YStack } from 'tamagui'
 
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { Container, HeaderBar, PressableRow, SafeAreaContainer, Text, XStack, YStack } from '@/componentsV2'
 import { defaultLanguage, languagesOptions } from '@/config/languages'
 import { useBuiltInAssistants } from '@/hooks/useAssistant'
-import { NavigationProps } from '@/types/naviagate'
+import { GeneralSettingsNavigationProps } from '@/types/naviagate'
 import { storage } from '@/utils'
 
 export default function LanguageChangeScreen() {
   const { t, i18n } = useTranslation()
-  const theme = useTheme()
-  const navigation = useNavigation<NavigationProps>()
+  const navigation = useNavigation<GeneralSettingsNavigationProps>()
   const [currentLanguage, setCurrentLanguage] = useState<string>(storage.getString('language') || defaultLanguage)
   const { resetBuiltInAssistants } = useBuiltInAssistants()
 
@@ -31,41 +27,34 @@ export default function LanguageChangeScreen() {
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <HeaderBar title={t('settings.general.language.title')} />
-      <SettingContainer>
-        <YStack flex={1} gap={12} paddingHorizontal={16}>
+      <Container>
+        <YStack className="flex-1 gap-3 px-4">
           {languagesOptions.map(opt => (
-            <XStack
+            <PressableRow
               key={opt.value}
               onPress={() => handleLanguageChange(opt.value)}
-              alignItems="center"
-              justifyContent="space-between"
-              padding={16}
-              borderRadius={8}
-              backgroundColor="$uiCardBackground"
-              pressStyle={{ opacity: 0.7 }}>
-              <XStack alignItems="center" space>
-                <Text fontSize={16}>{opt.flag}</Text>
-                <Text fontSize={16}>{opt.label}</Text>
+              className="bg-ui-card-background dark:bg-ui-card-background-dark p-4 rounded-xl">
+              <XStack className="items-center gap-3">
+                <Text className="text-base">{opt.flag}</Text>
+                <Text className="text-base">{opt.label}</Text>
               </XStack>
 
               <XStack
-                width={20}
-                height={20}
-                borderRadius={10}
-                borderWidth={2}
-                borderColor={currentLanguage === opt.value ? theme.color.val : theme['$color8']}
-                alignItems="center"
-                justifyContent="center">
+                className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
+                  currentLanguage === opt.value
+                    ? 'border-gray-900 dark:border-gray-100'
+                    : 'border-gray-400 dark:border-gray-600'
+                }`}>
                 {currentLanguage === opt.value && (
-                  <XStack width={10} height={10} borderRadius={5} backgroundColor={theme.color.val} />
+                  <XStack className="w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-gray-100" />
                 )}
               </XStack>
-            </XStack>
+            </PressableRow>
           ))}
         </YStack>
-      </SettingContainer>
+      </Container>
     </SafeAreaContainer>
   )
 }

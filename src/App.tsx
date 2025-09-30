@@ -1,23 +1,24 @@
-import 'react-native-reanimated'
 import '@/i18n'
+import 'react-native-reanimated'
+import '../global.css'
+
+import { HeroUINativeProvider } from 'heroui-native'
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
-import { NavigationContainer, ThemeProvider } from '@react-navigation/native'
+import { NavigationContainer } from '@react-navigation/native'
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'
 import { useFonts } from 'expo-font'
 import * as Localization from 'expo-localization'
-import * as NavigationBar from 'expo-navigation-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { SQLiteProvider } from 'expo-sqlite'
-import * as StatusBar from 'expo-status-bar'
 import React, { Suspense, useEffect } from 'react'
-import { ActivityIndicator, Platform } from 'react-native'
+import { ActivityIndicator } from 'react-native'
+import { SystemBars } from 'react-native-edge-to-edge'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { Provider, useSelector } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
-import { PortalProvider, TamaguiProvider } from 'tamagui'
 
 import { getDataBackupProviders } from '@/config/backup'
 import { getWebSearchProviders } from '@/config/websearchProviders'
@@ -32,9 +33,10 @@ import { upsertDataBackupProviders } from '../db/queries/backup.queries'
 import { upsertProviders } from '../db/queries/providers.queries'
 import { upsertWebSearchProviders } from '../db/queries/websearchProviders.queries'
 import migrations from '../drizzle/migrations'
-import tamaguiConfig from '../tamagui.config'
 import { getSystemAssistants } from './config/assistants'
 import { SYSTEM_PROVIDERS } from './config/providers'
+import { DialogProvider } from './hooks/useDialog'
+import { ToastProvider } from './hooks/useToast'
 import MainStackNavigator from './navigators/MainStackNavigator'
 import { storage } from './utils'
 
@@ -96,32 +98,24 @@ function DatabaseInitializer() {
 
 // 主题和导航组件
 function ThemedApp() {
-  const { activeTheme, reactNavigationTheme } = useTheme()
-
-  const backgroundColor = activeTheme === 'dark' ? '#121213ff' : '#f7f7f7ff'
-
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      NavigationBar.setBackgroundColorAsync(backgroundColor)
-      StatusBar.setStatusBarStyle('auto')
-    }
-  }, [backgroundColor])
+  const { themeSetting, reactNavigationTheme, isDark } = useTheme()
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme={activeTheme}>
-      <PortalProvider>
-        <KeyboardProvider>
-          <NavigationContainer theme={reactNavigationTheme}>
-            <ThemeProvider value={reactNavigationTheme}>
+    <HeroUINativeProvider config={{ colorScheme: themeSetting }}>
+      <KeyboardProvider>
+        <NavigationContainer theme={reactNavigationTheme}>
+          <SystemBars style={isDark ? 'light' : 'dark'} />
+          <DatabaseInitializer />
+          <DialogProvider>
+            <ToastProvider>
               <BottomSheetModalProvider>
-                <DatabaseInitializer />
                 <MainStackNavigator />
               </BottomSheetModalProvider>
-            </ThemeProvider>
-          </NavigationContainer>
-        </KeyboardProvider>
-      </PortalProvider>
-    </TamaguiProvider>
+            </ToastProvider>
+          </DialogProvider>
+        </NavigationContainer>
+      </KeyboardProvider>
+    </HeroUINativeProvider>
   )
 }
 

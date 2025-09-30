@@ -14,19 +14,32 @@ import { SettingsStackParamList } from '@/navigators/SettingsStackNavigator'
 export type RootStackParamList = {
   WelcomeScreen: undefined
   HomeScreen: { screen: string; params: { topicId: string } } | undefined // This is actually the AppDrawerNavigator
-  ChatScreen: { topicId: string }
-  TopicScreen: undefined
-  AssistantScreen: undefined
-  AssistantMarketScreen: undefined
-  AssistantDetailScreen: { assistantId: string; tab?: string }
-  Settings: { screen: string; params?: any } | undefined
+  // ChatScreen: { topicId: string }
+  // TopicScreen: undefined
+  // AssistantScreen: undefined
+  // AssistantMarketScreen: undefined
+  // AssistantDetailScreen: { assistantId: string; tab?: string }
+  // Settings: { screen: string; params?: any } | undefined
 }
 
 // App Drawer Navigator
 export type AppDrawerParamList = {
-  Home: undefined
-  Assistant: undefined
-  Settings: undefined
+  Home:
+    | { screen: 'ChatScreen'; params: { topicId: string } }
+    | { screen: 'TopicScreen' }
+    | { screen: 'SettingsScreen' }
+    | { screen: 'GeneralSettings'; params?: any }
+    | { screen: 'AssistantSettings'; params?: any }
+    | { screen: 'ProvidersSettings'; params?: any }
+    | { screen: 'DataSourcesSettings'; params?: any }
+    | { screen: 'WebSearchSettings'; params?: any }
+    | { screen: 'AboutSettings'; params?: any }
+    | undefined
+  Assistant:
+    | { screen: 'AssistantScreen' }
+    | { screen: 'AssistantMarketScreen' }
+    | { screen: 'AssistantDetailScreen'; params: { assistantId: string; tab?: string } }
+    | undefined
 }
 
 // Navigation Props

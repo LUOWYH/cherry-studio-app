@@ -1,4 +1,4 @@
-import { createStackNavigator, StackNavigationProp, TransitionPresets } from '@react-navigation/stack'
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import React from 'react'
 
 import AssistantDetailScreen from '@/screens/assistant/AssistantDetailScreen'
@@ -11,8 +11,6 @@ export type AssistantStackParamList = {
   AssistantDetailScreen: { assistantId: string; tab?: string }
 }
 
-export type AssistantStackNavigationProp = StackNavigationProp<AssistantStackParamList>
-
 const Stack = createStackNavigator<AssistantStackParamList>()
 
 export default function AssistantStackNavigator() {
@@ -20,6 +18,7 @@ export default function AssistantStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        gestureResponseDistance: 9999,
         ...TransitionPresets.SlideFromRightIOS
       }}>
       <Stack.Screen name="AssistantScreen" component={AssistantScreen} />

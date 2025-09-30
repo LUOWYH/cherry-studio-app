@@ -1,52 +1,74 @@
 import { DrawerNavigationProp } from '@react-navigation/drawer'
 import { DrawerActions, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import { ImpactFeedbackStyle } from 'expo-haptics'
-import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, Platform, TouchableOpacity, View } from 'react-native'
+import * as React from 'react'
+import { useCallback, useEffect } from 'react'
+import { ActivityIndicator, Platform, View } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
 import { useDispatch } from 'react-redux'
-import { YStack } from 'tamagui'
+import { YStack, SafeAreaContainer, MessageInput } from '@/componentsV2'
 
-import { AssistantCard } from '@/components/assistant/AssistantCard'
-import { HeaderBar } from '@/components/header-bar'
-import { MessageInput } from '@/components/message-input/MessageInput'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { useBottom } from '@/hooks/useBottom'
 import { useTopic } from '@/hooks/useTopic'
+import { HomeStackParamList } from '@/navigators/HomeStackNavigator'
 import { getDefaultAssistant } from '@/services/AssistantService'
+import { loggerService } from '@/services/LoggerService'
 import { createNewTopic, getNewestTopic } from '@/services/TopicService'
+import { useAppSelector } from '@/store'
 import { setCurrentTopicId } from '@/store/topic'
-import { RootStackParamList } from '@/types/naviagate'
-import { runAsyncFunction } from '@/utils'
 import { haptic } from '@/utils/haptic'
 
 import ChatContent from './ChatContent'
 import WelcomeContent from './WelcomeContent'
+import { ChatScreenHeader } from '@/componentsV2/features/ChatScreen/Header'
 
-type ChatScreenRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>
+const logger = loggerService.withContext('ChatScreen')
+
+type ChatScreenRouteProp = RouteProp<HomeStackParamList, 'ChatScreen'>
 
 const ChatScreen = () => {
   const route = useRoute<ChatScreenRouteProp>()
   const navigation = useNavigation<DrawerNavigationProp<any>>()
-  const { topicId } = route.params || {}
+  const currentTopicId = useAppSelector(state => state.topic.currentTopicId)
+  const topicId = route.params?.topicId || currentTopicId
   const { topic, isLoading } = useTopic(topicId)
-  const [showAssistantCard, setShowAssistantCard] = useState(false)
   const dispatch = useDispatch()
+  const specificBottom = useBottom()
 
-  useEffect(() => {
-    runAsyncFunction(async () => {
+  const initializeTopic = useCallback(async () => {
+    try {
+      logger.verbose('Initializing topic', { topicId })
+
       const newestTopic = await getNewestTopic()
 
       if (newestTopic) {
+        logger.info('Found existing newest topic', { topicId: newestTopic.id })
         navigation.setParams({ topicId: newestTopic.id })
       } else {
+        logger.info('Creating new topic with default assistant')
         const defaultAssistant = await getDefaultAssistant()
         const newTopic = await createNewTopic(defaultAssistant)
         navigation.setParams({ topicId: newTopic.id })
         dispatch(setCurrentTopicId(newTopic.id))
+        logger.info('New topic created', { topicId: newTopic.id })
       }
-    })
-  }, [dispatch, navigation])
+    } catch (error) {
+      logger.error('Failed to initialize topic', error, { topicId })
+    }
+  }, [topicId, navigation, dispatch])
+
+  useEffect(() => {
+    // Only initialize if topicId indicates a new or missing topic
+    // 1. 'new' -> explicit new topic request
+    // 2. undefined -> after deleting all topics
+    // 3. '' -> initial state when topics are empty
+    const shouldInitialize = topicId === 'new' || topicId === undefined || topicId === ''
+
+    if (shouldInitialize) {
+      initializeTopic()
+    }
+  }, [topicId, initializeTopic])
 
   // 处理侧滑手势
   const handleSwipeGesture = (event: any) => {
@@ -77,7 +99,7 @@ const ChatScreen = () => {
   const hasMessage = topic.messages.length > 0
 
   return (
-    <SafeAreaContainer>
+    <SafeAreaContainer style={{ paddingBottom: 0 }}>
       <PanGestureHandler
         onGestureEvent={handleSwipeGesture}
         onHandlerStateChange={handleSwipeGesture}
@@ -85,37 +107,17 @@ const ChatScreen = () => {
         failOffsetY={[-20, 20]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 10}>
-          <YStack paddingHorizontal={14} backgroundColor="$colorTransparent" flex={1}>
-            <HeaderBar
-              topic={topic}
-              showAssistantCard={showAssistantCard}
-              setShowAssistantCard={setShowAssistantCard}
-            />
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -20 : -specificBottom}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <YStack className="flex-1">
+            <ChatScreenHeader topic={topic} />
 
-            {showAssistantCard && (
-              <>
-                {/*实现失焦回弹*/}
-                <TouchableOpacity
-                  activeOpacity={0}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    zIndex: 1
-                  }}
-                  onPress={() => setShowAssistantCard(false)}
-                />
-                <View style={{ zIndex: 2 }}>
-                  <AssistantCard topic={topic} />
-                </View>
-              </>
-            )}
-
-            <View style={{ flex: 1, marginVertical: 10, paddingHorizontal: 4 }}>
+            <View
+              style={{
+                flex: 1
+              }}>
+              {/* ChatContent use key to re-render screen content */}
+              {/* if remove key, change topic will not re-render */}
               {!hasMessage ? <WelcomeContent /> : <ChatContent key={topic.id} topic={topic} />}
             </View>
             <MessageInput topic={topic} />

@@ -1,14 +1,14 @@
 import { isEmpty } from 'lodash'
-import { FC, memo } from 'react'
-import React from 'react'
+import React, { FC, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import Markdown from 'react-native-marked'
-import { View } from 'tamagui'
+import { View } from 'react-native'
 
 import { useTheme } from '@/hooks/useTheme'
 import { MainTextMessageBlock, ThinkingMessageBlock, TranslationMessageBlock } from '@/types/message'
 import { escapeBrackets, removeSvgEmptyLines } from '@/utils/formats'
 
+import { markdownColors } from './MarkdownStyles'
 import { useMarkedRenderer } from './useMarkedRenderer'
 
 interface Props {
@@ -27,12 +27,21 @@ const ReactNativeMarkdown: FC<Props> = ({ block }) => {
   }
 
   const messageContent = getMessageContent(block)
+  const colors = isDark ? markdownColors.dark : markdownColors.light
 
   const { renderer, tokenizer } = useMarkedRenderer(isDark)
 
   return (
     <View>
       <Markdown
+        theme={{
+          colors: {
+            code: colors.codeBg,
+            link: colors.link,
+            text: colors.text,
+            border: colors.border
+          }
+        }}
         value={messageContent}
         renderer={renderer}
         tokenizer={tokenizer}

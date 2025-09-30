@@ -1,218 +1,71 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { Menu } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
-import { debounce } from 'lodash'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator } from 'react-native'
-import { ScrollView, Tabs, Text, View } from 'tamagui'
+import { View } from 'react-native'
 
-import AllAssistantsTab from '@/components/assistant/market/AllAssistantsTab'
-import AssistantItemSheet from '@/components/assistant/market/AssistantItemSheet'
-import CategoryAssistantsTab from '@/components/assistant/market/CategoryAssistantsTab'
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { DrawerGestureWrapper } from '@/components/ui/DrawerGestureWrapper'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { DrawerGestureWrapper, SafeAreaContainer, Container, HeaderBar, SearchInput } from '@/componentsV2'
+import { Menu } from '@/componentsV2/icons/LucideIcon'
 import { useBuiltInAssistants } from '@/hooks/useAssistant'
-import { AssistantStackNavigationProp } from '@/navigators/AssistantStackNavigator'
+import { useSearch } from '@/hooks/useSearch'
 import { Assistant } from '@/types/assistant'
-import { groupByCategories } from '@/utils/assistants'
+import { DrawerNavigationProps } from '@/types/naviagate'
 import { haptic } from '@/utils/haptic'
-
-import SafeAreaContainer from '../../components/ui/SafeAreaContainer'
-
-interface TabConfig {
-  value: string
-  label: string
-}
-
-type FilterType = 'all' | string
+import AssistantMarketLoading from '@/componentsV2/features/Assistant/AssistantMarketLoading'
+import AssistantsTabContent from '@/componentsV2/features/Assistant/AssistantsTabContent'
+import AssistantItemSheet from '@/componentsV2/features/Assistant/AssistantItemSheet'
 
 export default function AssistantMarketScreen() {
   const { t } = useTranslation()
-  const navigation = useNavigation<AssistantStackNavigationProp>()
+  const navigation = useNavigation<DrawerNavigationProps>()
 
   const bottomSheetRef = useRef<BottomSheetModal>(null)
   const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(null)
-
-  const { builtInAssistants } = useBuiltInAssistants()
-
-  // 添加加载状态
   const [isInitializing, setIsInitializing] = useState(true)
 
-  const handleAssistantItemPress = useCallback((assistant: Assistant) => {
+  const { builtInAssistants } = useBuiltInAssistants()
+  const {
+    searchText,
+    setSearchText,
+    filteredItems: filteredAssistants
+  } = useSearch(
+    builtInAssistants,
+    useCallback((assistant: Assistant) => [assistant.name || '', assistant.id || ''], [])
+  )
+
+  const handleAssistantItemPress = (assistant: Assistant) => {
+    haptic(ImpactFeedbackStyle.Medium)
     setSelectedAssistant(assistant)
     bottomSheetRef.current?.present()
-  }, [])
-
-  const [actualFilterType, setActualFilterType] = useState<FilterType>('all')
-  const [searchText, setSearchText] = useState('')
-  const [debouncedSearchText, setDebouncedSearchText] = useState('')
-
-  // 创建防抖函数，300ms 延迟
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((text: string) => {
-        setDebouncedSearchText(text)
-      }, 300),
-    []
-  )
-
-  // 使用 useMemo 优化计算
-  const baseFilteredAssistants = useMemo(() => {
-    if (!debouncedSearchText) {
-      return builtInAssistants
-    }
-
-    const lowerSearchText = debouncedSearchText.toLowerCase().trim()
-
-    if (!lowerSearchText) {
-      return builtInAssistants
-    }
-
-    return builtInAssistants.filter(
-      assistant =>
-        (assistant.name && assistant.name.toLowerCase().includes(lowerSearchText)) ||
-        (assistant.id && assistant.id.toLowerCase().includes(lowerSearchText))
-    )
-  }, [builtInAssistants, debouncedSearchText])
-
-  const assistantGroupsForDisplay = useMemo(() => {
-    return groupByCategories(baseFilteredAssistants)
-  }, [baseFilteredAssistants])
-
-  const assistantGroupsForTabs = useMemo(() => {
-    return groupByCategories(builtInAssistants)
-  }, [builtInAssistants])
-
-  // 监听 searchText 变化，触发防抖更新
-  useEffect(() => {
-    debouncedSetSearch(searchText)
-
-    // 清理函数，组件卸载时取消防抖
-    return () => {
-      debouncedSetSearch.cancel()
-    }
-  }, [searchText, debouncedSetSearch])
-
-  // 初始化完成效果
-  useEffect(() => {
-    if (builtInAssistants.length > 0 && isInitializing) {
-      // 使用 setTimeout 确保 UI 渲染在下一个事件循环
-      setTimeout(() => {
-        setIsInitializing(false)
-      }, 100)
-    }
-  }, [builtInAssistants, isInitializing])
-
-  // 过滤助手逻辑 for CategoryAssistantsTab
-  const filterAssistants = useMemo(() => {
-    return actualFilterType === 'all'
-      ? baseFilteredAssistants
-      : baseFilteredAssistants.filter(assistant => assistant.group && assistant.group.includes(actualFilterType))
-  }, [actualFilterType, baseFilteredAssistants])
-
-  const tabConfigs = useMemo(() => {
-    const groupKeys = Object.keys(assistantGroupsForTabs).sort()
-
-    const allTab: TabConfig = {
-      value: 'all',
-      label: t('assistants.market.groups.all')
-    }
-
-    const dynamicTabs: TabConfig[] = groupKeys.map(groupKey => ({
-      value: groupKey,
-      label: t(`assistants.market.groups.${groupKey}`, groupKey.charAt(0).toUpperCase() + groupKey.slice(1))
-    }))
-
-    return [allTab, ...dynamicTabs]
-  }, [assistantGroupsForTabs, t])
-
-  const getTabStyle = useCallback(
-    (tabValue: string) => ({
-      height: '100%',
-      backgroundColor: actualFilterType === tabValue ? '$background' : 'transparent',
-      borderRadius: 15
-    }),
-    [actualFilterType]
-  )
-
-  const handleArrowClick = useCallback((groupKey: string) => {
-    if (groupKey) {
-      setActualFilterType(groupKey)
-    }
-  }, [])
+  }
 
   const handleMenuPress = () => {
     haptic(ImpactFeedbackStyle.Medium)
     navigation.dispatch(DrawerActions.openDrawer())
   }
 
-  const renderTabList = useMemo(
-    () => (
-      <Tabs.List gap={10} flexDirection="row" height={34}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {tabConfigs.map(({ value, label }) => (
-            <Tabs.Tab key={value} value={value} {...getTabStyle(value)}>
-              <Text>{label}</Text>
-            </Tabs.Tab>
-          ))}
-        </ScrollView>
-      </Tabs.List>
-    ),
-    [tabConfigs, getTabStyle]
-  )
+  const onChatNavigation = async (topicId: string) => {
+    navigation.navigate('Home', { screen: 'ChatScreen', params: { topicId } })
+  }
 
-  const renderTabContents = useMemo(
-    () => (
-      <>
-        <Tabs.Content value={'all'} flex={1}>
-          <AllAssistantsTab
-            assistantGroups={assistantGroupsForDisplay}
-            onArrowClick={handleArrowClick}
-            onAssistantPress={handleAssistantItemPress}
-          />
-        </Tabs.Content>
-        {tabConfigs
-          .filter(({ value }) => value !== 'all')
-          .map(({ value }) => (
-            <Tabs.Content key={value} value={value} flex={1}>
-              <CategoryAssistantsTab assistants={filterAssistants} onAssistantPress={handleAssistantItemPress} />
-            </Tabs.Content>
-          ))}
-      </>
-    ),
-    [assistantGroupsForDisplay, tabConfigs, filterAssistants, handleArrowClick, handleAssistantItemPress]
-  )
+  useEffect(() => {
+    if (builtInAssistants.length > 0 && isInitializing) {
+      const id = setTimeout(() => {
+        setIsInitializing(false)
+      }, 100)
+      return () => clearTimeout(id)
+    }
+  }, [builtInAssistants, isInitializing])
 
-  // 显示加载状态
   if (isInitializing) {
-    return (
-      <SafeAreaContainer>
-        <DrawerGestureWrapper>
-          <View collapsable={false} style={{ flex: 1 }}>
-            <HeaderBar
-              title={t('assistants.market.title')}
-              leftButton={{
-                icon: <Menu size={24} />,
-                onPress: handleMenuPress
-              }}
-            />
-            <View flex={1} justifyContent="center" alignItems="center">
-              <ActivityIndicator size="large" />
-            </View>
-          </View>
-        </DrawerGestureWrapper>
-      </SafeAreaContainer>
-    )
+    return <AssistantMarketLoading />
   }
 
   return (
-    <SafeAreaContainer>
+    <SafeAreaContainer className="pb-0">
       <DrawerGestureWrapper>
-        <View collapsable={false} style={{ flex: 1 }}>
+        <View collapsable={false} className="flex-1">
           <HeaderBar
             title={t('assistants.market.title')}
             leftButton={{
@@ -220,26 +73,21 @@ export default function AssistantMarketScreen() {
               onPress: handleMenuPress
             }}
           />
-          <SettingContainer paddingVertical={0}>
+          <Container className="py-0 gap-2.5">
             <SearchInput
               placeholder={t('assistants.market.search_placeholder')}
               value={searchText}
               onChangeText={setSearchText}
             />
 
-            <Tabs
-              gap={10}
-              defaultValue={'all'}
-              value={actualFilterType}
-              onValueChange={setActualFilterType}
-              orientation="horizontal"
-              flexDirection="column"
-              flex={1}>
-              {renderTabList}
-              {renderTabContents}
-            </Tabs>
-          </SettingContainer>
-          <AssistantItemSheet ref={bottomSheetRef} assistant={selectedAssistant} source="builtIn" />
+            <AssistantsTabContent assistants={filteredAssistants} onAssistantPress={handleAssistantItemPress} />
+          </Container>
+          <AssistantItemSheet
+            ref={bottomSheetRef}
+            assistant={selectedAssistant}
+            source="builtIn"
+            onChatNavigation={onChatNavigation}
+          />
         </View>
       </DrawerGestureWrapper>
     </SafeAreaContainer>
