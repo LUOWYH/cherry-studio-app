@@ -19,49 +19,60 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 设置 Node.js 环境并缓存 Yarn 依赖
+      # 2. 设置 Node.js 环境
+      # 注意：这里的 'cache' 选项已移除，以避免与 Corepack 冲突。
+      # 我们将在后面手动设置缓存。
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'yarn' # <-- 优化：缓存 Yarn 依赖
 
-      # 3. 启用 Corepack
+      # 3. 启用 Corepack (必须在设置 Node 之后，安装依赖之前)
       - name: Enable Corepack
         run: corepack enable
 
-      # 4. 设置 Java 环境
+      # 4. 手动缓存 Yarn 依赖 (新步骤)
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: .yarn/cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      # 5. 安装项目依赖
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # 6. 设置 Java 环境
       - name: Set up Java (JDK)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 5. 设置 Gradle 并缓存依赖 (新步骤)
+      # 7. 设置 Gradle 并缓存依赖
       - name: Setup Gradle and Cache
-        uses: gradle/actions/setup-gradle@v3 # <-- 优化：缓存 Gradle 依赖和包装器
+        uses: gradle/actions/setup-gradle@v3
 
-      # 6. 安装项目依赖 (现在会使用缓存)
-      - name: Install dependencies
-        run: yarn install --immutable
-
-      # 7. 生成原生 Android 项目
+      # 8. 生成原生 Android 项目
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
         
-      # 8. 为 Gradle 配置更多内存 (新步骤)
+      # 9. 为 Gradle 配置更多内存
       - name: Configure Gradle memory
-        run: echo "org.gradle.jvmargs=-Xmx4g" >> ./android/gradle.properties # <-- 修复：增加 Gradle 堆内存
+        run: echo "org.gradle.jvmargs=-Xmx4g" >> ./android/gradle.properties
 
-      # 9. 构建 Android APK (现在会使用缓存)
+      # 10. 构建 Android APK
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleRelease --build-cache # <-- 优化：启用 Gradle 构建缓存
+          ./gradlew assembleRelease --build-cache
         
-      # 10. 上传构建产物 (APK)
+      # 11. 上传构建产物 (APK)
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: Android-Build-APK
           path: android/app/build/outputs/apk/release/app-release.apk
+
