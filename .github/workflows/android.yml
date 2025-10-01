@@ -19,40 +19,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 设置 Node.js 环境
+      # 2. 设置 Node.js 环境并缓存 Yarn 依赖
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'yarn' # <-- 优化：缓存 Yarn 依赖
 
-      # 3. 启用 Corepack (新加的关键步骤)
-      # 这会确保使用 package.json 中指定的 Yarn 版本
+      # 3. 启用 Corepack
       - name: Enable Corepack
         run: corepack enable
 
-      # 4. 设置 Java 环境 (Android 构建需要)
+      # 4. 设置 Java 环境
       - name: Set up Java (JDK)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 5. 安装项目依赖
-      # Corepack 会自动使用 Yarn 4.x。对于 Yarn 2+, --immutable 是 CI 环境的最佳实践。
+      # 5. 设置 Gradle 并缓存依赖 (新步骤)
+      - name: Setup Gradle and Cache
+        uses: gradle/actions/setup-gradle@v3 # <-- 优化：缓存 Gradle 依赖和包装器
+
+      # 6. 安装项目依赖 (现在会使用缓存)
       - name: Install dependencies
         run: yarn install --immutable
 
-      # 6. 生成原生 Android 项目
+      # 7. 生成原生 Android 项目
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
+        
+      # 8. 为 Gradle 配置更多内存 (新步骤)
+      - name: Configure Gradle memory
+        run: echo "org.gradle.jvmargs=-Xmx4g" >> ./android/gradle.properties # <-- 修复：增加 Gradle 堆内存
 
-      # 7. 构建 Android APK
+      # 9. 构建 Android APK (现在会使用缓存)
       - name: Build Android APK
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --build-cache # <-- 优化：启用 Gradle 构建缓存
         
-      # 8. 上传构建产物 (APK)
+      # 10. 上传构建产物 (APK)
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
